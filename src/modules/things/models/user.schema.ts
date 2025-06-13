@@ -3,17 +3,20 @@ import { BaseSchema } from "./base/base.schema";
 
 @Schema()
 export class User extends BaseSchema {
-  @Prop({ required: true, unique: true })
-  username: string;
+    @Prop({ required: true, unique: true })
+    username: string;
 
-  @Prop({ required: true })
-  password: string;
+    @Prop({ required: true })
+    password: string;
 
-  @Prop({ required: true , unique: true })
-  email: string;
+    @Prop({ required: true })
+    photo: string;
 
-  @Prop({ default: false })
-  isActive: boolean;
+    @Prop({ required: true, unique: true })
+    email: string;
+
+    @Prop({ default: false })
+    isActive: boolean;
 
 }
 export const UserSchema = SchemaFactory.createForClass(User);

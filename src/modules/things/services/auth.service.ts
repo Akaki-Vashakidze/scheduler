@@ -5,12 +5,13 @@ import { Model } from "mongoose";
 import { SignupDto } from "../dtos/signup.dto";
 import * as bcrypt from 'bcrypt';
 import { ApiException } from "../classes/ApiException.class";
+import { LoginDto } from "../dtos/login.dto";
 
 @Injectable()
 export class AuthService {
     constructor(@InjectModel(User.name) private userModel: Model<User>) { }
     async signup(signupData: SignupDto) {
-        const { email, password, username } = signupData;
+        const { email, password, username , photo} = signupData;
         const emailInUse = await this.userModel.exists({ email });
         if (emailInUse) {
             return new ApiException("Email already in use", 400);
@@ -24,19 +25,21 @@ export class AuthService {
             username,
             email,
             password: hashedPassword,
+            photo
         });
     }
 
-    async login(email: string, password: string) {
-        const user = await this.userModel.findOne({ email });
+    async login(loginData:LoginDto) {
+        const {username, password} = loginData;
+        const user = await this.userModel.findOne({ username });
         if (!user) {
-            throw new ApiException("Invalid email or password", 400);
+            return new ApiException("Invalid username or password", 400);
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            throw new ApiException("Invalid email or password", 401);
+            return new ApiException("Invalid username or password", 401);
         }
-        return { message: "User logged in successfully" };
+        return { user };
     }
 
     async logout() {

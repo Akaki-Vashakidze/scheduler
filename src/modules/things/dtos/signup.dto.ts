@@ -13,4 +13,7 @@ export class SignupDto  {
 
     @IsEmail()
     email: string;
+
+    @IsString()
+    photo: string;
 }
