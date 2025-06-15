@@ -1,15 +1,16 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { User } from "../models/user.schema";
-import { Model } from "mongoose";
+import { Model, ObjectId } from "mongoose";
 import { SignupDto } from "../dtos/signup.dto";
 import * as bcrypt from 'bcrypt';
 import { ApiException } from "../classes/ApiException.class";
 import { LoginDto } from "../dtos/login.dto";
+import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class AuthService {
-    constructor(@InjectModel(User.name) private userModel: Model<User>) { }
+    constructor(@InjectModel(User.name) private userModel: Model<User>, private readonly jwtService: JwtService) { }
     async signup(signupData: SignupDto) {
         const { email, password, username , photo} = signupData;
         const emailInUse = await this.userModel.exists({ email });
@@ -39,7 +40,13 @@ export class AuthService {
         if (!isPasswordValid) {
             return new ApiException("Invalid username or password", 401);
         }
-        return { user };
+        const accessToken = await this.generateToken(user._id);
+        return { user, token:accessToken };
+    }
+
+    async generateToken(userId: ObjectId) {
+        const accessToken = this.jwtService.sign({userId},{expiresIn: '24h'});
+        return accessToken;
     }
 
     async logout() {
