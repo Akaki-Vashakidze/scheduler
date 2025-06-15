@@ -61,6 +61,19 @@ export class AuthService {
 
     }
 
+    async refreshTokens(refreshToken:string) {
+        const token = await this.refreshTokenModel.findOneAndDelete({ token: refreshToken , expiryDate: { $gt: new Date() } });
+        if (!token || token.expiryDate < new Date()) {
+            return new ApiException("Invalid or expired refresh token", 401);
+        }
+        const user = await this.userModel.findById(token.userId);
+        if (!user) {
+            return new ApiException("User not found", 404);
+        }
+        const newAccessToken = await this.generateToken(user._id);
+        return { accessToken: newAccessToken.accessToken, refreshToken: newAccessToken.refreshToken , user:user._id};  
+    }
+
     async logout() {
         // Implement logout logic here
         return { message: "User logged out successfully" };
