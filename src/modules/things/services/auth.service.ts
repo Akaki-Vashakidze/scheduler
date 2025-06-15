@@ -7,10 +7,11 @@ import * as bcrypt from 'bcrypt';
 import { ApiException } from "../classes/ApiException.class";
 import { LoginDto } from "../dtos/login.dto";
 import { JwtService } from "@nestjs/jwt";
-
+import { v4 as uuidv4 } from 'uuid';
+import { RefreshToken } from "../models/refresh-token.schema";
 @Injectable()
 export class AuthService {
-    constructor(@InjectModel(User.name) private userModel: Model<User>, private readonly jwtService: JwtService) { }
+    constructor(@InjectModel(User.name) private userModel: Model<User>,  @InjectModel(RefreshToken.name) private refreshTokenModel: Model<RefreshToken>, private readonly jwtService: JwtService) { }
     async signup(signupData: SignupDto) {
         const { email, password, username , photo} = signupData;
         const emailInUse = await this.userModel.exists({ email });
@@ -46,7 +47,18 @@ export class AuthService {
 
     async generateToken(userId: ObjectId) {
         const accessToken = this.jwtService.sign({userId},{expiresIn: '24h'});
-        return accessToken;
+        const refreshToken = uuidv4()
+        await this.storeRefreshToken(userId, refreshToken);
+        return {accessToken, refreshToken};
+    }
+
+    async storeRefreshToken(userId: ObjectId, refreshToken: string) {
+            await this.refreshTokenModel.create({
+                token: refreshToken,
+                userId: userId,
+                expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+            });
+
     }
 
     async logout() {
