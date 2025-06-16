@@ -117,7 +117,7 @@ export class AuthService {
     }
 
     async resetPassword(token: string, newPassword: string) {
-        const resetToken = await this.ResetTokemModel.findOne({ token, expiryDate: { $gt: new Date() } });
+        const resetToken = await this.ResetTokemModel.findOneAndDelete({ token, expiryDate: { $gt: new Date() } });
         if (!resetToken) {
             return new ApiException("Invalid or expired reset token", 400);
         }
