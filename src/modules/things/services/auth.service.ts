@@ -78,4 +78,19 @@ export class AuthService {
         // Implement logout logic here
         return { message: "User logged out successfully" };
     }
+
+    async changePassword( userId: ObjectId, oldPassword: string, newPassword: string ) {
+        const user = await this.userModel.findById(userId);
+        if (!user) {
+            return new ApiException("User not found", 404);
+        }
+        const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
+        if (!isOldPasswordValid) {
+            return new ApiException("Old password is incorrect", 400);
+        }
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedNewPassword;
+        await user.save();
+        return { message: "Password changed successfully" };
+    }
 }
