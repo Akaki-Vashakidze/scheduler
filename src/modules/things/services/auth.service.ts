@@ -9,9 +9,12 @@ import { LoginDto } from "../dtos/login.dto";
 import { JwtService } from "@nestjs/jwt";
 import { v4 as uuidv4 } from 'uuid';
 import { RefreshToken } from "../models/refresh-token.schema";
+import { nanoid } from 'nanoid';
+import { ResetToken } from "../models/reset-token.schema";
+
 @Injectable()
 export class AuthService {
-    constructor(@InjectModel(User.name) private userModel: Model<User>, @InjectModel(RefreshToken.name) private refreshTokenModel: Model<RefreshToken>, private readonly jwtService: JwtService) { }
+    constructor(@InjectModel(ResetToken.name) private ResetTokemModel: Model<ResetToken>, @InjectModel(User.name) private userModel: Model<User>, @InjectModel(RefreshToken.name) private refreshTokenModel: Model<RefreshToken>, private readonly jwtService: JwtService) { }
     async signup(signupData: SignupDto) {
         const { email, password, username, photo } = signupData;
         const emailInUse = await this.userModel.exists({ email });
@@ -92,5 +95,22 @@ export class AuthService {
         user.password = hashedNewPassword;
         await user.save();
         return { message: "Password changed successfully" };
+    }
+
+    async forgotPassword(email: string) {
+        const user = await this.userModel.findOne({ email });
+        if (!user) {
+            return new ApiException("Email not found", 404);
+        } else {
+            const resetToken = nanoid(64)
+            await this.ResetTokemModel.create({
+                token: resetToken,
+                userId: user._id,
+                expiryDate: new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+            });
+        }
+        return {
+            message: "If this email is registered, a password reset link will be sent to it."
+        };
     }
 }
