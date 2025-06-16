@@ -11,10 +11,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { RefreshToken } from "../models/refresh-token.schema";
 import { nanoid } from 'nanoid';
 import { ResetToken } from "../models/reset-token.schema";
+import { MailService } from "./mail.service";
 
 @Injectable()
 export class AuthService {
-    constructor(@InjectModel(ResetToken.name) private ResetTokemModel: Model<ResetToken>, @InjectModel(User.name) private userModel: Model<User>, @InjectModel(RefreshToken.name) private refreshTokenModel: Model<RefreshToken>, private readonly jwtService: JwtService) { }
+    constructor(@InjectModel(ResetToken.name) private ResetTokemModel: Model<ResetToken>, private mailService:MailService, @InjectModel(User.name) private userModel: Model<User>, @InjectModel(RefreshToken.name) private refreshTokenModel: Model<RefreshToken>, private readonly jwtService: JwtService) { }
     async signup(signupData: SignupDto) {
         const { email, password, username, photo } = signupData;
         const emailInUse = await this.userModel.exists({ email });
@@ -108,9 +109,26 @@ export class AuthService {
                 userId: user._id,
                 expiryDate: new Date(Date.now() + 60 * 60 * 1000) // 1 hour
             });
+            this.mailService.sendMail(user.email, "Password Reset Request", `To reset your password, please click the link below:\n\nhttp://yourapp.com/reset-password?token=${resetToken}`, `<p>To reset your password, please click the link below:</p><p><a href="http://yourapp.com/reset-password?token=${resetToken}">Reset Password</a></p>`);
+            return {
+                message: "If this email is registered, a password reset link will be sent to it."
+            };  
         }
-        return {
-            message: "If this email is registered, a password reset link will be sent to it."
-        };
+    }
+
+    async resetPassword(token: string, newPassword: string) {
+        const resetToken = await this.ResetTokemModel.findOne({ token, expiryDate: { $gt: new Date() } });
+        if (!resetToken) {
+            return new ApiException("Invalid or expired reset token", 400);
+        }
+        const user = await this.userModel.findById(resetToken.userId);
+        if (!user) {
+            return new ApiException("User not found", 404);
+        }
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedNewPassword;
+        await user.save();
+        await this.ResetTokemModel.deleteOne({ _id: resetToken._id });
+        return { message: "Password reset successfully" };
     }
 }

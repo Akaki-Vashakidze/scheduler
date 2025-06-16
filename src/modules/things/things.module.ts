@@ -7,6 +7,7 @@ import MongooseModels from './models';import * as dotenv from 'dotenv';
 import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './services/auth.service';
 import { JwtModule } from '@nestjs/jwt';
+import { MailService } from './services/mail.service';
 
 dotenv.config();
 
@@ -21,7 +22,7 @@ dotenv.config();
         MongooseModule.forFeature(MongooseModels),
     ],
     controllers: [CatsController,AuthController],
-    providers: [CatsService, AuthService],
+    providers: [CatsService, AuthService, MailService],
 })
 export class ThingsModule {
     constructor() {
