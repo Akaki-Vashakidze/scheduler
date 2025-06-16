@@ -11,9 +11,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { RefreshToken } from "../models/refresh-token.schema";
 @Injectable()
 export class AuthService {
-    constructor(@InjectModel(User.name) private userModel: Model<User>,  @InjectModel(RefreshToken.name) private refreshTokenModel: Model<RefreshToken>, private readonly jwtService: JwtService) { }
+    constructor(@InjectModel(User.name) private userModel: Model<User>, @InjectModel(RefreshToken.name) private refreshTokenModel: Model<RefreshToken>, private readonly jwtService: JwtService) { }
     async signup(signupData: SignupDto) {
-        const { email, password, username , photo} = signupData;
+        const { email, password, username, photo } = signupData;
         const emailInUse = await this.userModel.exists({ email });
         if (emailInUse) {
             return new ApiException("Email already in use", 400);
@@ -31,8 +31,8 @@ export class AuthService {
         });
     }
 
-    async login(loginData:LoginDto) {
-        const {username, password} = loginData;
+    async login(loginData: LoginDto) {
+        const { username, password } = loginData;
         const user = await this.userModel.findOne({ username });
         if (!user) {
             return new ApiException("Invalid username or password", 400);
@@ -42,27 +42,27 @@ export class AuthService {
             return new ApiException("Invalid username or password", 401);
         }
         const accessToken = await this.generateToken(user._id);
-        return { user, token:accessToken };
+        return { user, token: accessToken };
     }
 
     async generateToken(userId: ObjectId) {
-        const accessToken = this.jwtService.sign({userId},{expiresIn: '24h'});
+        const accessToken = this.jwtService.sign({ userId }, { expiresIn: '1h' });
         const refreshToken = uuidv4()
         await this.storeRefreshToken(userId, refreshToken);
-        return {accessToken, refreshToken};
+        return { accessToken, refreshToken };
     }
 
-    async storeRefreshToken(userId: ObjectId, refreshToken: string) {
-            await this.refreshTokenModel.create({
-                token: refreshToken,
-                userId: userId,
-                expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-            });
-
+    async storeRefreshToken(userId: ObjectId, token: string) {
+        const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+        await this.refreshTokenModel.updateOne({
+            userId: userId,
+        },
+        { $set: { expiryDate, token } },
+        { upsert: true });
     }
 
-    async refreshTokens(refreshToken:string) {
-        const token = await this.refreshTokenModel.findOneAndDelete({ token: refreshToken , expiryDate: { $gt: new Date() } });
+    async refreshTokens(refreshToken: string) {
+        const token = await this.refreshTokenModel.findOne({ token: refreshToken, expiryDate: { $gt: new Date() } });
         if (!token || token.expiryDate < new Date()) {
             return new ApiException("Invalid or expired refresh token", 401);
         }
@@ -71,7 +71,7 @@ export class AuthService {
             return new ApiException("User not found", 404);
         }
         const newAccessToken = await this.generateToken(user._id);
-        return { accessToken: newAccessToken.accessToken, refreshToken: newAccessToken.refreshToken , user:user._id};  
+        return { accessToken: newAccessToken.accessToken, refreshToken: newAccessToken.refreshToken, user: user._id };
     }
 
     async logout() {
