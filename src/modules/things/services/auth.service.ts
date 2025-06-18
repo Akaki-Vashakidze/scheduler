@@ -43,7 +43,7 @@ export class AuthService {
         if (!isPasswordValid) {
             return new ApiException("Invalid username or password", 401);
         }
-        const accessToken = nanoid(128)
+        const accessToken = user._id.toString() + '$$$' + nanoid(128);
         try {
             await this.storeAccessToken(user._id, accessToken);
         } catch (err) {
@@ -53,11 +53,11 @@ export class AuthService {
         return { user, token: accessToken };
     }
 
-    async storeAccessToken(userId: ObjectId, token: string) {
+    async storeAccessToken(user: ObjectId, token: string) {
         const expiryDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
 
         await this.accessTokenModel.updateOne(
-            { userId }, // match by userId only
+            { user }, // match by userId only
             { $set: { token, expiryDate } },
             { upsert: true } // create if doesn't exist
         );
@@ -104,7 +104,7 @@ async checkAccessToken(token: string){
         if (!user) {
             return new ApiException("Email not found", 404);
         } else {
-            const resetToken = nanoid(128)
+            const resetToken = user._id.toString() + '$$$' + nanoid(128);
             await this.accessTokenModel.create({
                 token: resetToken,
                 user: user._id,

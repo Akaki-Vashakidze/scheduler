@@ -17,6 +17,5 @@ export class User extends BaseSchema {
 
     @Prop({ default: false })
     isActive: boolean;
-
 }
 export const UserSchema = SchemaFactory.createForClass(User);
