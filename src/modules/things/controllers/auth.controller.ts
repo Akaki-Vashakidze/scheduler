@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Put, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Post, Put, Req, UseGuards } from "@nestjs/common";
 import { AuthService } from "../services/auth.service";
 import { SignupDto } from "../dtos/signup.dto";
 import { LoginDto } from "../dtos/login.dto";
@@ -7,6 +7,7 @@ import { ChangePasswordDto } from "../dtos/change-password.dto";
 import { AuthGuard } from "../guards/auth.guard";
 import { ForgotPasswordDto } from "../dtos/forgot-password.dto";
 import { ResetPasswordDto } from "../dtos/reset-password.dto";
+import mongoose from "mongoose";
 
 @Controller('auth')
 export class AuthController {
@@ -22,14 +23,10 @@ export class AuthController {
         return this.authService.login(loginData);
     }
 
-    @Post('refresh')
-    async refreshTokens(@Body() refreshTokenDto: RefreshTokenDto) {
-        return this.authService.refreshTokens(refreshTokenDto.refreshToken);
-    }
-
     @UseGuards(AuthGuard)
     @Put('change-password')
     async changePassword(@Body() changePasswordDto: ChangePasswordDto, @Req() req) {
+        console.log(req)
         return this.authService.changePassword(req.userId, changePasswordDto.oldPassword, changePasswordDto.newPassword);
     }
 
@@ -39,7 +36,24 @@ export class AuthController {
     }
 
     @Put('reset-password')
-    async resetPassword(@Body() resetData:ResetPasswordDto) {
-        return this.authService.resetPassword(resetData.resetToken, resetData.newPassword);
+    async resetPassword(@Body() resetData: ResetPasswordDto) {
+        return this.authService.resetPassword(resetData.accessToken, resetData.newPassword);
+    }
+
+    @Get('session')
+    async session(@Req() req: any) {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            throw new Error('Authorization header missing or malformed');
+        }
+
+        const token = authHeader.replace('Bearer ', '');
+        return this.authService.checkAccessToken(token);
+    }
+
+    @Post('logout')
+    async logout(@Body() userId: mongoose.Schema.Types.ObjectId) {
+        return this.authService.logout(userId);
     }
 }
