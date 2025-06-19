@@ -6,9 +6,8 @@ import { SignupDto } from "../dtos/signup.dto";
 import * as bcrypt from 'bcrypt';
 import { ApiException } from "../classes/ApiException.class";
 import { LoginDto } from "../dtos/login.dto";
-import { v4 as uuidv4 } from 'uuid';
+import * as jwt from 'jsonwebtoken';
 import { AccessToken } from "../models/access-token.schema";
-import { nanoid } from 'nanoid';
 import { MailService } from "./mail.service";
 
 @Injectable()
@@ -33,6 +32,11 @@ export class AuthService {
         });
     }
 
+    async generateToken(userId: string) {
+        const token = jwt.sign({ userId }, process.env.JWT_SECRET);
+        return token;
+    }
+
     async login(loginData: LoginDto) {
         const { username, password } = loginData;
         const user = await this.userModel.findOne({ username });
@@ -43,14 +47,14 @@ export class AuthService {
         if (!isPasswordValid) {
             return new ApiException("Invalid username or password", 401);
         }
-        const accessToken = user._id.toString() + '$$$' + nanoid(128);
+        const accessToken = this.generateToken(user._id.toString());
         try {
-            await this.storeAccessToken(user._id, accessToken);
+            await this.storeAccessToken(user._id, await accessToken);
         } catch (err) {
             console.error('Failed to store access token:', err);
             throw new ApiException('Internal server error while creating token', 500);
         }
-        return { user, token: accessToken };
+        return { user, token: await accessToken };
     }
 
     async storeAccessToken(user: ObjectId, token: string) {
@@ -63,21 +67,21 @@ export class AuthService {
         );
     }
 
-async checkAccessToken(token: string){
+    async checkAccessToken(token: string) {
 
-    const tokenDoc = await this.accessTokenModel.findOne({ token }).populate('userId');
+        const tokenDoc = await this.accessTokenModel.findOne({ token }).populate('userId');
 
-    if (!tokenDoc) {
-        return false; // token not found
+        if (!tokenDoc) {
+            return false; // token not found
+        }
+
+        const now = new Date();
+        if (tokenDoc.expiryDate > now) {
+            return { token: tokenDoc }; // token is still valid
+        }
+
+        return false; // token expired
     }
-
-    const now = new Date();
-    if (tokenDoc.expiryDate > now) {
-        return {token:tokenDoc}; // token is still valid
-    }
-
-    return false; // token expired
-}
 
     async logout(userId: ObjectId) {
         await this.accessTokenModel.deleteOne({ userId });
@@ -104,13 +108,14 @@ async checkAccessToken(token: string){
         if (!user) {
             return new ApiException("Email not found", 404);
         } else {
-            const resetToken = user._id.toString() + '$$$' + nanoid(128);
+
+            const accessToken = this.generateToken(user._id.toString());
             await this.accessTokenModel.create({
-                token: resetToken,
+                token: accessToken,
                 user: user._id,
                 expiryDate: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hour
             });
-            this.mailService.sendMail(user.email, "Password Reset Request", `To reset your password, please click the link below:\n\nhttp://yourapp.com/reset-password?token=${resetToken}`, `<p>To reset your password, please click the link below:</p><p><a href="http://yourapp.com/reset-password?token=${resetToken}">Reset Password</a></p>`);
+            this.mailService.sendMail(user.email, "Password Reset Request", `To reset your password, please click the link below:\n\nhttp://yourapp.com/reset-password?token=${accessToken}`, `<p>To reset your password, please click the link below:</p><p><a href="http://yourapp.com/reset-password?token=${accessToken}">Reset Password</a></p>`);
             return {
                 message: "If this email is registered, a password reset link will be sent to it."
             };

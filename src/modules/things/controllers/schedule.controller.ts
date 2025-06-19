@@ -2,17 +2,18 @@ import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from 
 import { ScheduleMeetDto } from "../dtos/schedule-meet.dto";
 import { ScheduleService } from "../services/schedule.service";
 import { AuthGuard } from "../guards/auth.guard";
+import { JwtTokenService } from "../services/jwt-token.service";
 
 @Controller('schedule')
 @UseGuards(AuthGuard)
 export class ScheduleController {
-    constructor(private scheduleService: ScheduleService) { }
+    constructor(private scheduleService: ScheduleService, private jwtTokenService:JwtTokenService) { }
 
     @Post('add')
     async add(@Body() scheduleData: ScheduleMeetDto, @Req() req: Request) {
         const authHeader = req.headers['authorization'];
         const token = authHeader?.split(' ')[1];
-        const userId = token.split('$$$')[0];
+        const userId = this.jwtTokenService.getUserIdFromToken(token);
         return this.scheduleService.add(scheduleData, userId);
     }
 
@@ -20,7 +21,8 @@ export class ScheduleController {
     async getSchedulesByUser(@Req() req: Request) {
         const authHeader = req.headers['authorization'];
         const token = authHeader?.split(' ')[1];
-        const userId = token.split('$$$')[0];
+        const userId = this.jwtTokenService.getUserIdFromToken(token);
+        console.log(userId)
         return this.scheduleService.getSchedulesByUser(userId);
     }
 

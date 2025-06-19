@@ -7,6 +7,7 @@ import { ScheduleController } from './controllers/schedule.controller';
 import { AuthService } from './services/auth.service';
 import { MailService } from './services/mail.service';
 import { ScheduleService } from './services/schedule.service';
+import { JwtTokenService } from './services/jwt-token.service';
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ dotenv.config();
         MongooseModule.forFeature(MongooseModels),
     ],
     controllers: [AuthController, ScheduleController],
-    providers: [AuthService, MailService, ScheduleService],
+    providers: [AuthService, MailService, ScheduleService,JwtTokenService],
 })
 export class ThingsModule {
     constructor() {
