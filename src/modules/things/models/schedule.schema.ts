@@ -38,5 +38,8 @@ export class Schedule extends BaseSchema {
     @Prop({ required: false })
     canceled: boolean;
 
+    @Prop({ required: false })
+    reminder: boolean;
+
 }
 export const ScheduleSchema = SchemaFactory.createForClass(Schedule);

@@ -16,8 +16,11 @@ export class ScheduleController {
         return this.scheduleService.add(scheduleData, userId);
     }
 
-    @Get('user/:id')
-    async getSchedulesByUser(@Param('id') userId: string) {
+    @Get('list')
+    async getSchedulesByUser(@Req() req: Request) {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader?.split(' ')[1];
+        const userId = token.split('$$$')[0];
         return this.scheduleService.getSchedulesByUser(userId);
     }
 
@@ -34,6 +37,11 @@ export class ScheduleController {
     @Post('cancel/:id')
     async cancelScheduleMeeting(@Param('id') scheduleMeetId: string) {
         return this.scheduleService.cancelScheduleMeeting(scheduleMeetId);
+    }
+
+    @Post('remind/:id')
+    async remindScheduleMeeting(@Param('id') scheduleMeetId: string) {
+        return this.scheduleService.remindScheduleMeeting(scheduleMeetId);
     }
 
     @Delete('remove/:id')

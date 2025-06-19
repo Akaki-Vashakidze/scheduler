@@ -47,4 +47,9 @@ export class ScheduleService {
         await this.scheduleModel.findByIdAndDelete(scheduleMeetId).exec();
         return ApiResponse.success('Schedule successfully deleted');
     }
+
+    async remindScheduleMeeting(scheduleMeetId: string): Promise<ApiResponse<null>> {
+        await this.scheduleModel.findByIdAndUpdate(scheduleMeetId, { reminder: true }, { new: true }).exec();
+        return ApiResponse.success('Schedule successfully updated');
+    }
 }
