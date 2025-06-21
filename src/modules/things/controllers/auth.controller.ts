@@ -9,10 +9,11 @@ import { ForgotPasswordDto } from "../dtos/forgot-password.dto";
 import { ResetPasswordDto } from "../dtos/reset-password.dto";
 import mongoose from "mongoose";
 import { ConfirmCodeDto } from "../dtos/confirm-code.dto";
+import { JwtTokenService } from "../services/jwt-token.service";
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) { }
+    constructor(private readonly authService: AuthService, private jwtTokenService:JwtTokenService) { }
 
     @Post('signup')
     async signup(@Body() signupData: SignupDto) {
@@ -63,7 +64,9 @@ export class AuthController {
     }
 
     @Post('logout')
-    async logout(@Body() userId: mongoose.Schema.Types.ObjectId) {
-        return this.authService.logout(userId);
+    async logout(@Req() req: Request) {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader?.split(' ')[1];
+        return this.authService.logout(token);
     }
 }

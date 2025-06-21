@@ -161,9 +161,9 @@ export class AuthService {
         return false; // token expired
     }
 
-    async logout(userId: ObjectId) {
-        await this.accessTokenModel.deleteOne({ userId });
-        return { message: "User logged out successfully" };
+    async logout(token: string) {
+        await this.accessTokenModel.deleteOne({ token });
+        return ApiResponse.success('User logged out successfully');
     }
 
     async changePassword(userId: ObjectId, oldPassword: string, newPassword: string) {
