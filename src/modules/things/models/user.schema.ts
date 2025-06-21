@@ -3,14 +3,9 @@ import { BaseSchema } from "./base/base.schema";
 
 @Schema()
 export class User extends BaseSchema {
-    @Prop({ required: true, unique: true })
-    username: string;
 
     @Prop({ required: true })
     password: string;
-
-    @Prop({ required: false })
-    photo: string;
 
     @Prop({ required: true, unique: true })
     email: string;

@@ -8,6 +8,7 @@ import { AuthGuard } from "../guards/auth.guard";
 import { ForgotPasswordDto } from "../dtos/forgot-password.dto";
 import { ResetPasswordDto } from "../dtos/reset-password.dto";
 import mongoose from "mongoose";
+import { ConfirmCodeDto } from "../dtos/confirm-code.dto";
 
 @Controller('auth')
 export class AuthController {
@@ -26,6 +27,11 @@ export class AuthController {
     @Post('sendVerificationCodeEmail')
     async sendVerificationCodeEmail(@Body() {email}) {
         return this.authService.sendVerificationCodeEmail(email);
+    }
+
+    @Post('confirmCodeEmail')
+    async confirmCodeEmail(@Body() data:ConfirmCodeDto) {
+        return this.authService.confirmCodeEmail(data);
     }
 
     @UseGuards(AuthGuard)
