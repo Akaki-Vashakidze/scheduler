@@ -17,10 +17,11 @@ import { ConfirmCodeDto } from "../dtos/confirm-code.dto";
 export class AuthService {
     constructor(private mailService: MailService, @InjectModel(User.name) private userModel: Model<User>, @InjectModel(EmailVerification.name) private emailVerificationModel: Model<EmailVerification>, @InjectModel(AccessToken.name) private accessTokenModel: Model<AccessToken>) { }
     async signup(signupData: SignupDto) {
-        let { email, password } = signupData;
+        let { email, password , code } = signupData;
         email = email.toLowerCase()
         const verificationRecord = await this.emailVerificationModel.findOne({
             email,
+            code,
             passwordExpire: { $gt: new Date() }, // check if still valid
         });
 
@@ -31,18 +32,20 @@ export class AuthService {
         if (emailInUse) {
             return new ApiException("Email already in use", 400);
         }
-        // const usernameInUse = await this.userModel.exists({ username });
-        // if (usernameInUse) {
-        //     return new ApiException("username already in use", 400);
-        // }
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await this.userModel.create({
-            // username,
-            // photo,
             email,
             password: hashedPassword,
         });
-        return ApiResponse.success(user)
+
+        const accessToken = this.generateToken(user._id.toString());
+        try {
+            await this.storeAccessToken(user._id, await accessToken);
+        } catch (err) {
+            console.error('Failed to store access token:', err);
+            throw new ApiException('Internal server error while creating token', 500);
+        }
+        return { user, token: await accessToken };
     }
 
     async generateToken(userId: string) {
@@ -109,18 +112,18 @@ export class AuthService {
 
 
     async login(loginData: LoginDto) {
-        let { username, password } = loginData;
-        let user = await this.userModel.findOne({ username });
+        let { email, password } = loginData;
+        let user = await this.userModel.findOne({ email });
         if (!user) {
-            username = username.toLowerCase();
-            user = await this.userModel.findOne({ email: username });
+            email = email.toLowerCase();
+            user = await this.userModel.findOne({ email: email });
         }
         if (!user) {
-            return new ApiException("Invalid username or password", 400);
+            return new ApiException("Invalid email or password", 400);
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return new ApiException("Invalid username or password", 401);
+            return new ApiException("Invalid email or password", 401);
         }
         const accessToken = this.generateToken(user._id.toString());
         try {

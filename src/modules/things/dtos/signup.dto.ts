@@ -12,4 +12,7 @@ export class SignupDto  {
     @IsEmail()
     email: string;
 
+    @IsString()
+    code: string;
+
 }
