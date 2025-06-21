@@ -9,7 +9,7 @@ export class User extends BaseSchema {
     @Prop({ required: true })
     password: string;
 
-    @Prop({ required: true })
+    @Prop({ required: false })
     photo: string;
 
     @Prop({ required: true, unique: true })

@@ -9,12 +9,15 @@ import { LoginDto } from "../dtos/login.dto";
 import * as jwt from 'jsonwebtoken';
 import { AccessToken } from "../models/access-token.schema";
 import { MailService } from "./mail.service";
+import { ApiResponse } from "src/modules/base/classes/ApiResponse.class";
+import { EmailVerification } from "../models/email-verification.schema";
 
 @Injectable()
 export class AuthService {
-    constructor(private mailService: MailService, @InjectModel(User.name) private userModel: Model<User>, @InjectModel(AccessToken.name) private accessTokenModel: Model<AccessToken>) { }
+    constructor(private mailService: MailService, @InjectModel(User.name) private userModel: Model<User>, @InjectModel(EmailVerification.name) private emailVerificationModel: Model<EmailVerification>, @InjectModel(AccessToken.name) private accessTokenModel: Model<AccessToken>) { }
     async signup(signupData: SignupDto) {
-        const { email, password, username, photo } = signupData;
+        let { email, password, username, photo } = signupData;
+        email = email.toLowerCase()
         const emailInUse = await this.userModel.exists({ email });
         if (emailInUse) {
             return new ApiException("Email already in use", 400);
@@ -37,9 +40,39 @@ export class AuthService {
         return token;
     }
 
+async sendVerificationCodeEmail(email: string) {
+    email = email.toLowerCase();
+    const existing = await this.emailVerificationModel.findOne({
+        email,
+        expiresAt: { $gt: new Date() }, // not expired
+    });
+    if (existing) {
+        return ApiResponse.success('Verification code already sent');
+    }
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+
+    // Set expiration time (e.g. 2 minutes from now)
+    const expiresAt = new Date(Date.now() + 2 * 60 * 1000);
+
+    await this.emailVerificationModel.create({ email, code, expiresAt });
+
+    await this.mailService.sendMail(
+        email,
+        `Your Verification Code`,
+        `To continue registration, please use this code on the website: ${code}`
+    );
+
+    return ApiResponse.success('Verification code sent to email');
+}
+
+
     async login(loginData: LoginDto) {
-        const { username, password } = loginData;
-        const user = await this.userModel.findOne({ username });
+        let { username, password } = loginData;
+        let user = await this.userModel.findOne({ username });
+        if (!user) {
+            username = username.toLowerCase();
+            user = await this.userModel.findOne({ email: username });
+        }
         if (!user) {
             return new ApiException("Invalid username or password", 400);
         }

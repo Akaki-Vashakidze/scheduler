@@ -23,10 +23,14 @@ export class AuthController {
         return this.authService.login(loginData);
     }
 
+    @Post('sendVerificationCodeEmail')
+    async sendVerificationCodeEmail(@Body() {email}) {
+        return this.authService.sendVerificationCodeEmail(email);
+    }
+
     @UseGuards(AuthGuard)
     @Put('change-password')
     async changePassword(@Body() changePasswordDto: ChangePasswordDto, @Req() req) {
-        console.log(req)
         return this.authService.changePassword(req.userId, changePasswordDto.oldPassword, changePasswordDto.newPassword);
     }
 
