@@ -146,8 +146,7 @@ export class AuthService {
     }
 
     async checkAccessToken(token: string) {
-
-        const tokenDoc = await this.accessTokenModel.findOne({ token }).populate('userId');
+        const tokenDoc = await this.accessTokenModel.findOne({ token }).populate('user');
 
         if (!tokenDoc) {
             return false; // token not found
@@ -155,7 +154,8 @@ export class AuthService {
 
         const now = new Date();
         if (tokenDoc.expiryDate > now) {
-            return { token: tokenDoc }; // token is still valid
+            let data = tokenDoc; // token is still valid
+            return ApiResponse.success(data)
         }
 
         return false; // token expired
