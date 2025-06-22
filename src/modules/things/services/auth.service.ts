@@ -48,11 +48,6 @@ export class AuthService {
         return { user, token: await accessToken };
     }
 
-    async generateToken(userId: string) {
-        const token = jwt.sign({ userId }, process.env.JWT_SECRET);
-        return token;
-    }
-
     async confirmCodeEmail(data: ConfirmCodeDto) {
         const email = data.email.toLowerCase();
         const code = data.code;
@@ -181,24 +176,40 @@ export class AuthService {
     //     return { message: "Password changed successfully" };
     // }
 
-    async forgotPassword(email: string) {
-        const user = await this.userModel.findOne({ email });
-        if (!user) {
-            return new ApiException("Email not found", 404);
-        } else {
+async forgotPassword(email: string) {
+    const user = await this.userModel.findOne({ email });
 
-            const accessToken = this.generateToken(user._id.toString());
-            await this.accessTokenModel.create({
-                token: accessToken,
-                user: user._id,
-                expiryDate: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hour
-            });
-            this.mailService.sendMail(user.email, "Password Reset Request", `To reset your password, please click the link below:\n\nhttp://yourapp.com/reset-password?token=${accessToken}`, `<p>To reset your password, please click the link below:</p><p><a href="http://yourapp.com/reset-password?token=${accessToken}">Reset Password</a></p>`);
-            return {
-                message: "If this email is registered, a password reset link will be sent to it."
-            };
-        }
+    if (!user) {
+        return new ApiException("Email not found", 404);
     }
+
+    const accessToken = await this.generateToken(user._id.toString());
+
+    await this.accessTokenModel.create({
+        token: accessToken,
+        user: user._id,
+        expiryDate: new Date(Date.now() + 24 * 60 * 60 * 1000)
+    });
+
+    this.mailService.sendMail(
+        user.email,
+        "Password Reset Request",
+        `To reset your password, please click the link below:\n\nhttp://yourapp.com/reset-password?token=${accessToken}`,
+        `<p>To reset your password, please click the link below:</p><p><a href="http://yourapp.com/reset-password?token=${accessToken}">Reset Password</a></p>`
+    );
+
+    let res = {
+        message: "If this email is registered, a password reset link will be sent to it."
+    };
+    return ApiResponse.success(res)
+}
+
+async generateToken(userId: string) {
+    // Optional: add 'expiresIn' if needed
+    const token = jwt.sign({ userId }, process.env.JWT_SECRET);
+    return token;
+}
+
 
     async resetPassword(token: string, newPassword: string) {
         const accessToken = await this.accessTokenModel.findOneAndDelete({ token, expiryDate: { $gt: new Date() } });
