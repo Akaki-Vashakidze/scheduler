@@ -2,12 +2,10 @@ import { Body, Controller, Get, Post, Put, Req, UseGuards } from "@nestjs/common
 import { AuthService } from "../services/auth.service";
 import { SignupDto } from "../dtos/signup.dto";
 import { LoginDto } from "../dtos/login.dto";
-import { RefreshTokenDto } from "../dtos/refreshToken.dto";
 import { ChangePasswordDto } from "../dtos/change-password.dto";
 import { AuthGuard } from "../guards/auth.guard";
 import { ForgotPasswordDto } from "../dtos/forgot-password.dto";
 import { ResetPasswordDto } from "../dtos/reset-password.dto";
-import mongoose from "mongoose";
 import { ConfirmCodeDto } from "../dtos/confirm-code.dto";
 import { JwtTokenService } from "../services/jwt-token.service";
 
@@ -47,18 +45,21 @@ export class AuthController {
     }
 
     @Put('reset-password')
-    async resetPassword(@Body() resetData: ResetPasswordDto) {
-        return this.authService.resetPassword(resetData.accessToken, resetData.newPassword);
-    }
-
-    @Get('session')
-    async session(@Req() req: any) {
-        const authHeader = req.headers.authorization;
-
+    async resetPassword(@Req() req: Request,@Body() resetData: ResetPasswordDto) {
+        const authHeader = req.headers['authorization'];
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             throw new Error('Authorization header missing or malformed');
         }
+        const token = authHeader.replace('Bearer ', '');
+        return this.authService.resetPassword(token, resetData.currentPassword, resetData.newPassword);
+    }
 
+    @Get('session')
+    async session(@Req() req: Request) {
+        const authHeader = req.headers['authorization'];
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            throw new Error('Authorization header missing or malformed');
+        }
         const token = authHeader.replace('Bearer ', '');
         return this.authService.checkAccessToken(token);
     }

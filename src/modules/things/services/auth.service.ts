@@ -200,19 +200,25 @@ export class AuthService {
         }
     }
 
-    async resetPassword(token: string, newPassword: string) {
-        const accessToken = await this.accessTokenModel.findOneAndDelete({ token, expiryDate: { $gt: new Date() } });
+    async resetPassword(token: string, currentPassword:string, newPassword: string) {
+        const accessToken = await this.accessTokenModel.findOne({ token, expiryDate: { $gt: new Date() } });
         if (!accessToken) {
-            return new ApiException("Invalid or expired reset token", 400);
+            return new ApiException("Invalid or expired token", 400);
         }
         const user = await this.userModel.findById(accessToken.user);
         if (!user) {
             return new ApiException("User not found", 404);
         }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return new ApiException("Current password is wrong", 404);
+        }
         const hashedNewPassword = await bcrypt.hash(newPassword, 10);
         user.password = hashedNewPassword;
         await user.save();
-        await this.accessTokenModel.deleteOne({ _id: accessToken._id });
-        return { message: "Password reset successfully" };
+        // await this.accessTokenModel.deleteOne({ _id: accessToken._id });
+        let data = { message: "Password reset successfully" };
+        return ApiResponse.success(data)
     }
 }
