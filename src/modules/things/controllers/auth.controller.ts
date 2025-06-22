@@ -34,9 +34,9 @@ export class AuthController {
     }
 
     @UseGuards(AuthGuard)
-    @Put('change-password')
-    async changePassword(@Body() changePasswordDto: ChangePasswordDto, @Req() req) {
-        return this.authService.changePassword(req.userId, changePasswordDto.oldPassword, changePasswordDto.newPassword);
+    @Put('reset-password')
+    async resetPassword(@Body() resetData: ResetPasswordDto, @Req() req) {
+        return this.authService.resetPassword(resetData.accessToken, resetData.newPassword);
     }
 
     @Post('forgot-password')
@@ -44,14 +44,14 @@ export class AuthController {
         return this.authService.forgotPassword(forgotPasswordDto.email);
     }
 
-    @Put('reset-password')
-    async resetPassword(@Req() req: Request,@Body() resetData: ResetPasswordDto) {
+    @Put('change-password')
+    async changePassword(@Req() req: Request,@Body() resetData: ChangePasswordDto) {
         const authHeader = req.headers['authorization'];
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             throw new Error('Authorization header missing or malformed');
         }
         const token = authHeader.replace('Bearer ', '');
-        return this.authService.resetPassword(token, resetData.currentPassword, resetData.newPassword);
+        return this.authService.changePassword(token, resetData.currentPassword, resetData.newPassword);
     }
 
     @Get('session')
