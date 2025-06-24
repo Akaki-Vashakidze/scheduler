@@ -52,6 +52,7 @@ export class SmsService {
     }
 
     public async sendSms(phone: string, message: string) {
+        let test = 0;
         try {
             const response = await axios.post(this.apiUrl, {
                 phone,
