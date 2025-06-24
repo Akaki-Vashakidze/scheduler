@@ -14,4 +14,9 @@ export class SmsController {
     async handleSmsReply(@Body() data: any) {
         return await this.smsService.handleSmsReply(data)
     }
+
+    @Post('test')
+    async test(@Body() data: any) {
+        return await this.smsService.test(data)
+    }
 }

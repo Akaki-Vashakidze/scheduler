@@ -47,7 +47,11 @@ export class SmsService {
         return await this.smsResModel.create({ body, time })
     }
 
-    async sendSms(phone: string, message: string) {
+    public async test(body1: any) {
+        return 'test works'
+    }
+
+    public async sendSms(phone: string, message: string) {
         try {
             const response = await axios.post(this.apiUrl, {
                 phone,
@@ -57,7 +61,7 @@ export class SmsService {
                 // Optional: Add custom data that will be returned in the webhook payload
                 // webhookData: 'your_custom_data_here', 
             });
-
+            
             const result = response.data;
             console.log('Textbelt API Response:', result);
 
