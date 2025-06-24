@@ -1,4 +1,4 @@
-import { ApiPage } from './ApiPage.class';
+
 import { ApiSort } from './ApiSort.class';
 
 export enum ApiResponseType {
@@ -11,6 +11,6 @@ export enum ApiResponseType {
 export class ApiResult<T> {
     type: ApiResponseType;
     data: T;
-    page?: ApiPage;
+    page?: any;
     sort: ApiSort[];
 }
