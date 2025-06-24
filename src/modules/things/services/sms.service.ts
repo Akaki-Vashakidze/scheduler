@@ -62,7 +62,12 @@ export class SmsService {
                 // Optional: Add custom data that will be returned in the webhook payload
                 // webhookData: 'your_custom_data_here', 
             });
-            
+            console.log({
+                phone,
+                message,
+                key: 'd3ece05e8c5eddca018ba1dfa44914626e380e9aBMQAtfc5IV157iS47ONLMuvDN',
+                replyWebhookUrl: `${this.replyWebhookBaseUrl}/sms/handleSmsReply`,
+            })
             const result = response.data;
             console.log('Textbelt API Response:', result);
 
