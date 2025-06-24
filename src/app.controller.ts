@@ -10,7 +10,7 @@ export class AppController {
     return { message: 'This is a protected route', userId: req.userId}
   }
 
-  @Get('test')
+  @Get('test1')
   getHello(): string {
     return this.appService.getHello();
   }
