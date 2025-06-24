@@ -39,7 +39,7 @@ export class SmsService {
     constructor(@InjectModel(smsRes.name) private smsResModel: Model<smsRes>,) { }
     private apiUrl = 'https://textbelt.com/text';
     // Replace with your actual domain where your NestJS app is accessible publicly
-    private replyWebhookBaseUrl = 'https://your-domain.com';
+    private replyWebhookBaseUrl = 'https://scheduler-api-239do.ondigitalocean.app';
 
     public async handleSmsReply(body1: any) {
         let body = JSON.stringify(body1)
