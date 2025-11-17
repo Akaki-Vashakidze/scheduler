@@ -133,7 +133,7 @@ export class InvitationService {
     async declinenvitation(invitationId: string): Promise<ApiResponse<Invitation>> {
         const updated = await this.invitationModel.findByIdAndUpdate(
             invitationId,
-            { approved: 3 },
+            { approved: -1 },
             { new: true }
         ).exec();
 
