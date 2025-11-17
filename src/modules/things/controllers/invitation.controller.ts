@@ -4,6 +4,7 @@ import { InvitationService } from "../services/Invitation.service";
 import { AuthGuard } from "../guards/auth.guard";
 import { Helper } from "../utils/helper";
 import { JwtTokenService } from "../services/jwt-token.service";
+import { GetInvitationsDto } from "../dtos/getInvitations.dto";
 
 @Controller('invitation')
 @UseGuards(AuthGuard)
@@ -16,10 +17,10 @@ export class InvitationController {
         return this.invitationService.invite(invitationData, userId);
     }
 
-    @Get('list')
-    async getInvitationsByUser(@Req() req: Request) {
+    @Post('list')
+    async getInvitationsByUser(@Req() req: Request,@Body() getInvitationsData: GetInvitationsDto) {
         const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
-        return this.invitationService.getInvitationsByUser(userId);
+        return this.invitationService.getInvitationsByUser(userId, getInvitationsData);
     }
 
     @Get('proposed/:id')

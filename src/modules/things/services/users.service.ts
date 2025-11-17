@@ -7,15 +7,19 @@ import { InjectModel } from '@nestjs/mongoose';
 @Injectable()
 export class UsersService {
 
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+    constructor(@InjectModel(User.name) private userModel: Model<User>) { }
 
-    async getUsers(searchQuery: string, userId: string): Promise<ApiResponse<User[]>> {
+async getUsers(searchQuery: string, userId: string): Promise<ApiResponse<User[]>> {
+    if (!searchQuery || searchQuery.trim() === '') {
+        return ApiResponse.success([]);
+    }
+
     const users = await this.userModel.find(
         {
             email: { $regex: searchQuery, $options: 'i' },
             "record.state": 1,
             "record.isDeleted": { $ne: true },
-            _id: { $ne: new mongoose.Types.ObjectId(userId) }
+            _id: { $ne: new mongoose.Types.ObjectId(userId) } 
         },
         {
             email: 1,

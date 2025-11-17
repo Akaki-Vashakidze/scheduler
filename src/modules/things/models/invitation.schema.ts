@@ -33,6 +33,9 @@ export class Invitation extends BaseSchema {
     approved: boolean;
 
     @Prop({ required: false })
+    specificDate: Date;
+
+    @Prop({ required: false })
     active: boolean;
 
     @Prop({ required: false })
