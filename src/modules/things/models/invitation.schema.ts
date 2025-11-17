@@ -3,7 +3,7 @@ import { BaseSchema } from "./base/base.schema";
 import mongoose from "mongoose";
 
 @Schema()
-export class Schedule extends BaseSchema {
+export class Invitation extends BaseSchema {
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
     invitee: mongoose.Types.ObjectId;
@@ -24,6 +24,9 @@ export class Schedule extends BaseSchema {
     time: string;
 
     @Prop({ required: true })
+    location: string;
+
+    @Prop({ required: true })
     description: string;
 
     @Prop({ required: false })
@@ -42,4 +45,4 @@ export class Schedule extends BaseSchema {
     reminder: boolean;
 
 }
-export const ScheduleSchema = SchemaFactory.createForClass(Schedule);
+export const InvitationSchema = SchemaFactory.createForClass(Invitation);

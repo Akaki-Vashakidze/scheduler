@@ -14,6 +14,9 @@ export class ScheduleMeetDto {
     duration: number;
 
     @IsString()
+    location: string;
+
+    @IsString()
     weekday: string;
 
     @IsString()
