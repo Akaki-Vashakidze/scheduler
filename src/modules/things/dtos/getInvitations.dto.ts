@@ -19,7 +19,7 @@ export class GetInvitationsDto {
 
     @IsOptional()
     @IsNumber()
-    urjent?: number;
+    urgent?: number;
 
     @IsOptional()
     @IsNumber()

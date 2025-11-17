@@ -64,6 +64,10 @@ export class InvitationService {
             filter.approved = getInvitationsData.approved;
         }
 
+        if (getInvitationsData.urgent !== undefined) {
+            filter.urgent = getInvitationsData.urgent;
+        }
+
         if (getInvitationsData.active !== undefined) {
             filter['record.state'] = getInvitationsData.active;
         }

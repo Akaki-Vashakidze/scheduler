@@ -21,7 +21,7 @@ export class invitationDto {
 
     @IsOptional()
     @IsNumber()
-    urjent: number;
+    urgent: number;
 
     @IsString()
     invitee: string;

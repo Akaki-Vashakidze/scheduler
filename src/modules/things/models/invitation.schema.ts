@@ -33,7 +33,7 @@ export class Invitation extends BaseSchema {
     approved: number;
 
     @Prop({ required: false })
-    urjent: number;
+    urgent: number;
 
     @Prop({ required: false })
     specificDate: Date;
