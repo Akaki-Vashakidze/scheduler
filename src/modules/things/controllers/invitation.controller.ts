@@ -2,28 +2,23 @@ import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from 
 import { invitationDto } from "../dtos/invitation.dto";
 import { InvitationService } from "../services/Invitation.service";
 import { AuthGuard } from "../guards/auth.guard";
+import { Helper } from "../utils/helper";
 import { JwtTokenService } from "../services/jwt-token.service";
 
 @Controller('invitation')
 @UseGuards(AuthGuard)
 export class InvitationController {
-    constructor(private invitationService: InvitationService, private jwtTokenService:JwtTokenService) { }
-
-    getUserIdFromHeaderToken(req: Request): string {
-        const authHeader = req.headers['authorization'];
-        const token = authHeader?.split(' ')[1];
-        return this.jwtTokenService.getUserIdFromToken(token);
-    }   
+    constructor(private invitationService: InvitationService, private jwtTokenService: JwtTokenService) { }
 
     @Post('invite')
     async invite(@Body() invitationData: invitationDto, @Req() req: Request) {
-        const userId = this.getUserIdFromHeaderToken(req);
+        const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
         return this.invitationService.invite(invitationData, userId);
     }
 
     @Get('list')
     async getInvitationsByUser(@Req() req: Request) {
-        const userId = this.getUserIdFromHeaderToken(req);
+        const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
         return this.invitationService.getInvitationsByUser(userId);
     }
 
@@ -49,7 +44,7 @@ export class InvitationController {
 
     @Delete('remove/:id')
     async removeInvitation(@Param('id') invitationId: string, @Req() req: Request) {
-        const userId = this.getUserIdFromHeaderToken(req);
+        const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
         return this.invitationService.removeInvitation(userId, invitationId);
     }   
 }
