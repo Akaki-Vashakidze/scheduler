@@ -1,6 +1,6 @@
 import { IsNumber, IsString } from "class-validator";
 
-export class ScheduleMeetDto {
+export class invitationDto {
     @IsString()
     title: string;
 

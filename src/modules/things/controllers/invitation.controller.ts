@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from "@nestjs/common";
-import { ScheduleMeetDto } from "../dtos/schedule-meet.dto";
+import { invitationDto } from "../dtos/invitation.dto";
 import { InvitationService } from "../services/Invitation.service";
 import { AuthGuard } from "../guards/auth.guard";
 import { JwtTokenService } from "../services/jwt-token.service";
@@ -16,9 +16,9 @@ export class InvitationController {
     }   
 
     @Post('invite')
-    async invite(@Body() scheduleData: ScheduleMeetDto, @Req() req: Request) {
+    async invite(@Body() invitationData: invitationDto, @Req() req: Request) {
         const userId = this.getUserIdFromHeaderToken(req);
-        return this.invitationService.invite(scheduleData, userId);
+        return this.invitationService.invite(invitationData, userId);
     }
 
     @Get('list')
@@ -36,8 +36,8 @@ export class InvitationController {
     }
 
     @Put('edit/:id')
-    async editInvitation(@Body() scheduleData: ScheduleMeetDto, @Param('id') invitationId: string) {
-        return this.invitationService.editInvitation(scheduleData, invitationId);
+    async editInvitation(@Body() invitationData: invitationDto, @Param('id') invitationId: string) {
+        return this.invitationService.editInvitation(invitationData, invitationId);
     }
 
     @Post('cancel/:id')

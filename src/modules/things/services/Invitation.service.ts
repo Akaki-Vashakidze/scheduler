@@ -2,15 +2,21 @@ import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Invitation } from "../models/invitation.schema";
 import { Model } from "mongoose";
-import { ScheduleMeetDto } from "../dtos/schedule-meet.dto";
+import { invitationDto } from "../dtos/invitation.dto";
 import { ApiResponse } from "src/modules/base/classes/ApiResponse.class";
+import { User } from "../models/user.schema";
 
 @Injectable()
 export class InvitationService {
 
-    constructor(@InjectModel(Invitation.name) private invitationModel: Model<Invitation>) { }
+    constructor(@InjectModel(Invitation.name) private invitationModel: Model<Invitation>, @InjectModel(User.name) private userModel: Model<User>) { }
 
-    async invite(invitationData: ScheduleMeetDto, userId: string): Promise<ApiResponse<Invitation>> {
+    async invite(invitationData: invitationDto, userId: string): Promise<ApiResponse<Invitation>> {
+    const inviteeExists = await this.userModel.exists({ _id: invitationData.invitee });
+    if (!inviteeExists) {
+        return ApiResponse.error('Invitee does not exist', 404);
+    }
+    
     // Check duplicate invitation
     const existing = await this.invitationModel.findOne({
         inviter: userId,
@@ -26,14 +32,15 @@ export class InvitationService {
 
     const approved = invitationData.invitee == userId ? true : false;
 
-    const newSchedule = new this.invitationModel({
+    const newInvitation = new this.invitationModel({
         ...invitationData,
         inviter: userId,
         approved,
         active: true,
+        canceled: false,
     });
 
-    const saved = await newSchedule.save();
+    const saved = await newInvitation.save();
     return ApiResponse.success(saved);
 }
 
@@ -48,7 +55,7 @@ export class InvitationService {
         return ApiResponse.success(invitations);
     }
 
-    async editInvitation(invitationData: ScheduleMeetDto, invitationId: string): Promise<ApiResponse<Invitation>> {
+    async editInvitation(invitationData: invitationDto, invitationId: string): Promise<ApiResponse<Invitation>> {
         const updatedInvitation = await this.invitationModel.findByIdAndUpdate(invitationId, { ...invitationData, updated: true, approved: false }, { new: true }).exec();
         return ApiResponse.success(updatedInvitation);
     }
@@ -75,6 +82,6 @@ export class InvitationService {
 
     async remindInvitation(invitationId: string): Promise<ApiResponse<null>> {
         await this.invitationModel.findByIdAndUpdate(invitationId, { reminder: true }, { new: true }).exec();
-        return ApiResponse.success('Schedule successfully updated');
+        return ApiResponse.success('invitation successfully updated');
     }
 }
