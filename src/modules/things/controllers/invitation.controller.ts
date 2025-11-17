@@ -28,6 +28,16 @@ export class InvitationController {
         return this.invitationService.getInvitationsProposed(userId);
     }
 
+    @Post('accept/:id')
+    async acceptInvitation(@Param('id') invitationId: string) {
+        return this.invitationService.acceptInvitation(invitationId);
+    }
+
+    @Post('decline/:id')
+    async declineInvitation(@Param('id') invitationId: string) {
+        return this.invitationService.declinenvitation(invitationId);
+    }
+
     @Put('edit/:id')
     async editInvitation(@Body() invitationData: invitationDto, @Param('id') invitationId: string) {
         return this.invitationService.editInvitation(invitationData, invitationId);

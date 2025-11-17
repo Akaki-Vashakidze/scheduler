@@ -6,6 +6,7 @@ import { invitationDto } from "../dtos/invitation.dto";
 import { ApiResponse } from "src/modules/base/classes/ApiResponse.class";
 import { User } from "../models/user.schema";
 import { GetInvitationsDto } from "../dtos/getInvitations.dto";
+import { Approved } from "../enums/shared.enums";
 
 @Injectable()
 export class InvitationService {
@@ -59,12 +60,12 @@ export class InvitationService {
             filter.weekday = getInvitationsData.weekday;
         }
 
-        if (getInvitationsData.approved) {
+        if (getInvitationsData.approved !== undefined) {
             filter.approved = getInvitationsData.approved;
         }
 
-        if (getInvitationsData.active) {
-            filter.active = getInvitationsData.active;
+        if (getInvitationsData.active !== undefined) {
+            filter['record.state'] = getInvitationsData.active;
         }
 
         if (getInvitationsData.specificDate) {
@@ -75,7 +76,6 @@ export class InvitationService {
             const regex = { $regex: getInvitationsData.searchQuery, $options: 'i' };
             filter.$or = [
                 { title: regex },
-                { description: regex },
                 { location: regex },
                 { weekday: regex },
             ];
@@ -115,8 +115,28 @@ export class InvitationService {
         return ApiResponse.success('Invitation successfully deleted');
     }
 
-    async remindInvitation(invitationId: string): Promise<ApiResponse<null>> {
+    async remindInvitation(invitationId: string): Promise<ApiResponse<Invitation>> {
         await this.invitationModel.findByIdAndUpdate(invitationId, { reminder: true }, { new: true }).exec();
         return ApiResponse.success('invitation successfully updated');
+    }
+
+    async acceptInvitation(invitationId: string): Promise<ApiResponse<Invitation>> {
+        const updated = await this.invitationModel.findByIdAndUpdate(
+            invitationId,
+            { approved: 1 },
+            { new: true }
+        ).exec();
+
+        return ApiResponse.success(updated);
+    }
+
+    async declinenvitation(invitationId: string): Promise<ApiResponse<Invitation>> {
+        const updated = await this.invitationModel.findByIdAndUpdate(
+            invitationId,
+            { approved: 3 },
+            { new: true }
+        ).exec();
+
+        return ApiResponse.success(updated);
     }
 }
