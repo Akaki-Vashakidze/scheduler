@@ -23,10 +23,7 @@ export class InvitationController {
 
     @Get('list')
     async getInvitationsByUser(@Req() req: Request) {
-        const authHeader = req.headers['authorization'];
-        const token = authHeader?.split(' ')[1];
-        const userId = this.jwtTokenService.getUserIdFromToken(token);
-        console.log(userId)
+        const userId = this.getUserIdFromHeaderToken(req);
         return this.invitationService.getInvitationsByUser(userId);
     }
 

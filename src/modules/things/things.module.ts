@@ -10,6 +10,8 @@ import { InvitationService } from './services/Invitation.service';
 import { JwtTokenService } from './services/jwt-token.service';
 import { SmsService } from './services/sms.service';
 import { SmsController } from './controllers/sms.controller';
+import { UsersController } from './controllers/users.controller';
+import { UsersService } from './services/users.service';
 
 dotenv.config();
 
@@ -18,8 +20,8 @@ dotenv.config();
         MongooseModule.forRoot(process.env.DB_URL!),
         MongooseModule.forFeature(MongooseModels),
     ],
-    controllers: [AuthController, InvitationController,SmsController],
-    providers: [AuthService, MailService, InvitationService, JwtTokenService, SmsService],
+    controllers: [AuthController, InvitationController,SmsController, UsersController],
+    providers: [AuthService, MailService, InvitationService, JwtTokenService, SmsService, UsersService],
 })
 export class ThingsModule {
     constructor() {
