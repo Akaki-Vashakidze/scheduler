@@ -30,22 +30,22 @@ export class Invitation extends BaseSchema {
     description: string;
 
     @Prop({ required: false })
-    approved: boolean;
+    approved: number;
+
+    @Prop({ required: false })
+    urjent: number;
 
     @Prop({ required: false })
     specificDate: Date;
 
     @Prop({ required: false })
-    active: boolean;
+    updated: number;
 
     @Prop({ required: false })
-    updated: boolean;
+    canceled: number;
 
     @Prop({ required: false })
-    canceled: boolean;
-
-    @Prop({ required: false })
-    reminder: boolean;
+    reminder: number;
 
 }
 export const InvitationSchema = SchemaFactory.createForClass(Invitation);

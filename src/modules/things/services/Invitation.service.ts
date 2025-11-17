@@ -18,27 +18,26 @@ export class InvitationService {
             return ApiResponse.error('Invitee does not exist', 404);
         }
 
-        // Check duplicate invitation
         const existing = await this.invitationModel.findOne({
             inviter: userId,
             invitee: invitationData.invitee,
             weekday: invitationData.weekday,
             time: invitationData.time,
-            active: true
+            "record.state"  : 1
         });
 
         if (existing) {
             return ApiResponse.error('You have already sent an invitation at this time', 404);
         }
 
-        const approved = invitationData.invitee == userId ? true : false;
+        const approved = invitationData.invitee == userId ? 1 : 0;
 
         const newInvitation = new this.invitationModel({
             ...invitationData,
             inviter: userId,
             approved,
-            active: true,
-            canceled: false,
+            active: 1,
+            canceled: 0,
         });
 
         const saved = await newInvitation.save();
@@ -50,10 +49,8 @@ export class InvitationService {
         getInvitationsData: GetInvitationsDto
     ): Promise<ApiResponse<Invitation[]>> {
 
-        // Base filter
         const filter: any = { invitee: userId };
 
-        // Optional filters
         if (getInvitationsData.location) {
             filter.location = getInvitationsData.location;
         }
@@ -62,11 +59,11 @@ export class InvitationService {
             filter.weekday = getInvitationsData.weekday;
         }
 
-        if (getInvitationsData.approved !== undefined) {
+        if (getInvitationsData.approved) {
             filter.approved = getInvitationsData.approved;
         }
 
-        if (getInvitationsData.active !== undefined) {
+        if (getInvitationsData.active) {
             filter.active = getInvitationsData.active;
         }
 
@@ -94,7 +91,7 @@ export class InvitationService {
     }
 
     async editInvitation(invitationData: invitationDto, invitationId: string): Promise<ApiResponse<Invitation>> {
-        const updatedInvitation = await this.invitationModel.findByIdAndUpdate(invitationId, { ...invitationData, updated: true, approved: false }, { new: true }).exec();
+        const updatedInvitation = await this.invitationModel.findByIdAndUpdate(invitationId, { ...invitationData, updated: 1, approved: 0 }, { new: true }).exec();
         return ApiResponse.success(updatedInvitation);
     }
 

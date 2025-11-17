@@ -1,4 +1,4 @@
-import { IsBoolean, IsDate, IsOptional, IsString } from "class-validator";
+import { IsDate, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class GetInvitationsDto {
     @IsOptional()
@@ -14,12 +14,16 @@ export class GetInvitationsDto {
     weekday?: string;
 
     @IsOptional()
-    @IsBoolean()
-    approved?: boolean;
+    @IsNumber()
+    approved?: number;
 
     @IsOptional()
-    @IsBoolean()
-    active?: boolean;
+    @IsNumber()
+    urjent?: number;
+
+    @IsOptional()
+    @IsNumber()
+    active?: number;
 
     @IsOptional()
     @IsDate()
