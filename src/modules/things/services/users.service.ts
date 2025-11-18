@@ -4,11 +4,12 @@ import { ApiResponse } from 'src/modules/base/classes/ApiResponse.class';
 import mongoose, { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { RequestContact } from '../models/requestContact.schema';
+import { UserContacts } from '../models/contacts.schema';
 
 @Injectable()
 export class UsersService {
 
-    constructor(@InjectModel(User.name) private userModel: Model<User>, @InjectModel(RequestContact.name) private requestContactModel: Model<RequestContact>) { }
+    constructor(@InjectModel(UserContacts.name) private userContactstModel: Model<UserContacts>, @InjectModel(User.name) private userModel: Model<User>, @InjectModel(RequestContact.name) private requestContactModel: Model<RequestContact>) { }
 
     async getUsers(searchQuery: string, userId: string): Promise<ApiResponse<User[]>> {
         if (!searchQuery || searchQuery.trim() === '') {
@@ -67,20 +68,79 @@ export class UsersService {
         return ApiResponse.success(requests);
     }
 
-    async deleteContactRequest(requestId: string, userId: string): Promise<ApiResponse<null>> {
-        const request = await this.requestContactModel.findById(requestId);
+async deleteContactRequest(requestId: string, userId: string): Promise<ApiResponse<null>> {
+    const request = await this.requestContactModel.findById(requestId);
 
-        if (!request) {
-            return ApiResponse.error('Contact request not found', 404);
-        }
+    if (!request) {
+        return ApiResponse.error('Contact request not found', 404);
+    }
 
-        if (request.contact?.toString() !== userId || request.requester?.toString() !== userId) {
-            return ApiResponse.error('Unauthorized', 403);
-        }
+    if (
+        request.contact?.toString() !== userId &&
+        request.requester?.toString() !== userId
+    ) {
+        return ApiResponse.error('Unauthorized', 403);
+    }
 
-        await this.requestContactModel.deleteOne({ _id: requestId });
+    await this.requestContactModel.deleteOne({ _id: requestId });
 
-        return ApiResponse.success(null);
-    }       
+    return ApiResponse.success(null);
+}
+
+    
+async acceptContactRequest(userId: string, requestId: string): Promise<ApiResponse<any>> {
+    const reqId = new mongoose.Types.ObjectId(requestId);
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+
+    const request = await this.requestContactModel.findOne({
+        _id: reqId,
+        contact: userIdObj
+    }).exec();
+
+    if (!request) {
+        return ApiResponse.error('Contact request not found', 404);
+    }
+
+    const contactIdObj = new mongoose.Types.ObjectId(request.requester);
+
+    let deleted = await this.deleteContactRequest(requestId, userId);
+
+    if(deleted.statusCode != 200) {
+        return ApiResponse.error('error happened while deleting the contact request', 404);
+    }
+
+    const existing = await this.userContactstModel.findOne({
+        owner: userIdObj,
+        contact: contactIdObj
+    });
+
+    if (existing) {
+        return ApiResponse.error('Contact is already added', 400);
+    }
+
+    const contactA = new this.userContactstModel({
+        owner: userIdObj,
+        contact: contactIdObj,
+        isFavorite: false,
+        isBlocked: false
+    });
+
+    await contactA.save();
+
+    const contactB = new this.userContactstModel({
+        owner: contactIdObj,
+        contact: userIdObj,
+        isFavorite: false,
+        isBlocked: false
+    });
+
+    await contactB.save();
+
+    return ApiResponse.success({
+        userA: contactA,
+        userB: contactB
+    });
+}
+
 
 }
