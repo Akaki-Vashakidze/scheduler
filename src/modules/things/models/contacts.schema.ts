@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 
 @Schema({ timestamps: true })
-export class UserContacts {
+export class UserContact {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   owner?: Types.ObjectId;
 
@@ -16,4 +16,4 @@ export class UserContacts {
   isBlocked: number;
 }
 
-export const UserContactsSchema = SchemaFactory.createForClass(UserContacts);
+export const UserContactSchema = SchemaFactory.createForClass(UserContact);

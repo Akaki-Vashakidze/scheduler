@@ -45,4 +45,16 @@ export class UsersController {
         const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
         return this.usersService.deleteContactRequest(requestId, userId);
     }   
+
+    @Get('contacts')
+    async getContacts(@Req() req: Request) {
+        const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
+        return this.usersService.getContacts(userId);
+    }
+
+    @Delete('contact/:id')
+    async deleteContact(@Req() req: Request, @Param('id') requestId: string) {
+        const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
+        return this.usersService.deleteContact(requestId, userId);
+    }   
 }
