@@ -23,7 +23,7 @@ export class InvitationService {
             inviter: userId,
             invitee: invitationData.invitee,
             weekday: invitationData.weekday,
-            time: invitationData.time,
+            start: invitationData.start,
             "record.state"  : 1
         });
 

@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from "class-validator";
+import { IsDate, IsNumber, IsOptional, IsString, Matches } from "class-validator";
 
 export class invitationDto {
     @IsString()
@@ -8,10 +8,16 @@ export class invitationDto {
     description: string;
 
     @IsString()
-    time: string;
-
-    @IsNumber()
-    duration: number;
+    @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
+        message: 'Time must be in HH:MM format',
+    })
+    start: string;
+    
+    @IsString()
+    @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
+        message: 'Time must be in HH:MM format',
+    })
+    end: string;
 
     @IsString()
     location: string;

@@ -51,7 +51,7 @@ export class UsersController {
         const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
         return this.usersService.getContacts(userId);
     }
-
+    
     @Delete('contact/:id')
     async deleteContact(@Req() req: Request, @Param('id') requestId: string) {
         const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);

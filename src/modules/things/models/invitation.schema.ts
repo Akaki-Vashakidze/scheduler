@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { BaseSchema } from "./base/base.schema";
 import mongoose from "mongoose";
+import { IsMilitaryTime } from "class-validator";
 
 @Schema()
 export class Invitation extends BaseSchema {
@@ -15,13 +16,15 @@ export class Invitation extends BaseSchema {
     inviter: mongoose.Types.ObjectId;
 
     @Prop({ required: true })
-    duration: number;
+    @IsMilitaryTime()
+    start: string;
+
+    @Prop({ required: true })
+    @IsMilitaryTime()
+    end: string;
 
     @Prop({ required: true })
     title: string;
-
-    @Prop({ required: true })
-    time: string;
 
     @Prop({ required: true })
     location: string;

@@ -11,26 +11,44 @@ export class UsersService {
 
     constructor(@InjectModel(UserContact.name) private userContactstModel: Model<UserContact>, @InjectModel(User.name) private userModel: Model<User>, @InjectModel(RequestContact.name) private requestContactModel: Model<RequestContact>) { }
 
-    async getUsers(searchQuery: string, userId: string): Promise<ApiResponse<User[]>> {
+    async getUsers(searchQuery: string, userId: string): Promise<ApiResponse<any>> {
         if (!searchQuery || searchQuery.trim() === '') {
             return ApiResponse.success([]);
         }
+
+        const userObjId = new mongoose.Types.ObjectId(userId);
 
         const users = await this.userModel.find(
             {
                 email: { $regex: searchQuery, $options: 'i' },
                 "record.state": 1,
                 "record.isDeleted": { $ne: true },
-                _id: { $ne: new mongoose.Types.ObjectId(userId) }
+                _id: { $ne: userObjId }
             },
-            {
-                email: 1,
-                _id: 1
-            }
-        ).exec();
+            { email: 1 }
+        )
+            .lean()
+            .exec();
 
-        return ApiResponse.success(users);
+        const enhancedUsers = await Promise.all(
+            users.map(async (u: any) => {
+                const contactObjId = new mongoose.Types.ObjectId(String(u._id));
+
+                const isContact = await this.userContactstModel.findOne({
+                    owner: userObjId,
+                    contact: contactObjId,
+                }).lean();
+
+                return {
+                    ...u,
+                    isContact: Boolean(isContact)
+                };
+            })
+        );
+
+        return ApiResponse.success(enhancedUsers);
     }
+
 
     async createContactRequest(userId: string, contactId: string): Promise<ApiResponse<RequestContact[]>> {
         const existingRequest = await this.requestContactModel.findOne({
@@ -87,23 +105,23 @@ export class UsersService {
         return ApiResponse.success(null);
     }
 
-async deleteContact(contactId: string, userId: string): Promise<ApiResponse<null>> {
-    const ownerIdObj = new mongoose.Types.ObjectId(userId);
-    const contactIdObj = new mongoose.Types.ObjectId(contactId);
+    async deleteContact(contactId: string, userId: string): Promise<ApiResponse<null>> {
+        const ownerIdObj = new mongoose.Types.ObjectId(userId);
+        const contactIdObj = new mongoose.Types.ObjectId(contactId);
 
-    const result = await this.userContactstModel.deleteMany({
-        $or: [
-            { owner: ownerIdObj, contact: contactIdObj },
-            { owner: contactIdObj, contact: ownerIdObj }
-        ]
-    }).exec();
+        const result = await this.userContactstModel.deleteMany({
+            $or: [
+                { owner: ownerIdObj, contact: contactIdObj },
+                { owner: contactIdObj, contact: ownerIdObj }
+            ]
+        }).exec();
 
-    if (result.deletedCount === 0) {
-        return ApiResponse.error('Contact not found', 404);
+        if (result.deletedCount === 0) {
+            return ApiResponse.error('Contact not found', 404);
+        }
+
+        return ApiResponse.success(null);
     }
-
-    return ApiResponse.success(null);
-}
 
 
 
@@ -166,7 +184,7 @@ async deleteContact(contactId: string, userId: string): Promise<ApiResponse<null
         const contacts = await this.userContactstModel.find({
             owner: new mongoose.Types.ObjectId(userId),
         })
-        .populate('contact', 'email');
+            .populate('contact', 'email');
 
         return ApiResponse.success(contacts);
     }
