@@ -50,5 +50,11 @@ export class Invitation extends BaseSchema {
     @Prop({ required: false })
     reminder: number;
 
+    @Prop({ required: true })
+    isSingleUse: number;
+
+    @Prop({ required: false })
+    date: Date;
+
 }
 export const InvitationSchema = SchemaFactory.createForClass(Invitation);

@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from "@nestjs/common";
-import { invitationDto } from "../dtos/invitation.dto";
+import { InvitationArrayDto } from "../dtos/invitation.dto";
+import { InvitationDto } from "../dtos/invitation.dto";
 import { InvitationService } from "../services/Invitation.service";
 import { AuthGuard } from "../guards/auth.guard";
 import { Helper } from "../utils/helper";
@@ -12,7 +13,7 @@ export class InvitationController {
     constructor(private invitationService: InvitationService, private jwtTokenService: JwtTokenService) { }
 
     @Post('invite')
-    async invite(@Body() invitationData: invitationDto, @Req() req: Request) {
+    async invite(@Body() invitationData: InvitationArrayDto, @Req() req: Request) {
         const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
         return this.invitationService.invite(invitationData, userId);
     }
@@ -39,7 +40,7 @@ export class InvitationController {
     }
 
     @Put('edit/:id')
-    async editInvitation(@Body() invitationData: invitationDto, @Param('id') invitationId: string) {
+    async editInvitation(@Body() invitationData: InvitationDto, @Param('id') invitationId: string) {
         return this.invitationService.editInvitation(invitationData, invitationId);
     }
 

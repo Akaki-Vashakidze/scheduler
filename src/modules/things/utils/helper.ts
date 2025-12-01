@@ -7,4 +7,13 @@ export class Helper {
         const token = authHeader?.split(' ')[1];
         return jwtTokenService.getUserIdFromToken(token ?? "");
     }
+
+    private static timeToMinutes(t) {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+    }
+
+    public static compareTimes(t1, t2) {
+        return this.timeToMinutes(t1) - this.timeToMinutes(t2);
+    }
 }

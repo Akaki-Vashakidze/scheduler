@@ -1,6 +1,7 @@
-import { IsDate, IsNumber, IsOptional, IsString, Matches } from "class-validator";
+import { Type } from "class-transformer";
+import { IsArray, IsDate, IsNumber, IsOptional, IsString, Matches, ValidateNested } from "class-validator";
 
-export class invitationDto {
+export class InvitationDto {
     @IsString()
     title: string;
 
@@ -12,7 +13,7 @@ export class invitationDto {
         message: 'Time must be in HH:MM format',
     })
     start: string;
-    
+
     @IsString()
     @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
         message: 'Time must be in HH:MM format',
@@ -32,4 +33,17 @@ export class invitationDto {
     @IsString()
     invitee: string;
 
+    @IsNumber()
+    isSingleUse: number;
+
+    @Type(() => Date)
+    @IsDate()
+    date: Date;
+}
+
+export class InvitationArrayDto {
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => InvitationDto)
+    invitations: InvitationDto[];
 }
