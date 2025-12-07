@@ -1,8 +1,9 @@
 import { Type } from "class-transformer";
-import { IsArray, IsDate, IsNumber, IsOptional, IsString, Matches, ValidateNested } from "class-validator";
+import { IsArray, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateNested } from "class-validator";
 
 export class InvitationDto {
     @IsString()
+    @IsNotEmpty({ message: 'Title is required' })
     title: string;
 
     @IsString()
@@ -21,6 +22,7 @@ export class InvitationDto {
     end: string;
 
     @IsString()
+    @IsNotEmpty()
     location: string;
 
     @IsString()
