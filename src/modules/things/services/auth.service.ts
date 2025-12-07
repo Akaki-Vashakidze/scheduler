@@ -12,12 +12,13 @@ import { MailService } from "./mail.service";
 import { ApiResponse } from "src/modules/base/classes/ApiResponse.class";
 import { EmailVerification } from "../models/email-verification.schema";
 import { ConfirmCodeDto } from "../dtos/confirm-code.dto";
+import { SendEmailVerificationCodeDto } from "../dtos/sendEmailVerificationCode.dto";
 
 @Injectable()
 export class AuthService {
     constructor(private mailService: MailService, @InjectModel(User.name) private userModel: Model<User>, @InjectModel(EmailVerification.name) private emailVerificationModel: Model<EmailVerification>, @InjectModel(AccessToken.name) private accessTokenModel: Model<AccessToken>) { }
     async signup(signupData: SignupDto) {
-        let { email, password , code } = signupData;
+        let { email, password , code , name, surname} = signupData;
         email = email.toLowerCase()
         const verificationRecord = await this.emailVerificationModel.findOne({
             email,
@@ -35,6 +36,8 @@ export class AuthService {
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await this.userModel.create({
             email,
+            name,
+            surname,
             password: hashedPassword,
         });
 
@@ -72,8 +75,8 @@ export class AuthService {
         return ApiResponse.success('Email verified successfully');
     }
 
-    async sendVerificationCodeEmail(email: string) {
-        email = email.toLowerCase();
+    async sendVerificationCodeEmail(SendEmailVerificationCodeDto: SendEmailVerificationCodeDto) {
+       let email = SendEmailVerificationCodeDto.email.toLowerCase();
         const emailInUse = await this.userModel.exists({ email });
         if (emailInUse) {
             return new ApiException("Email already in use", 400);

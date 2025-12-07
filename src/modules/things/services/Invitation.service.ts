@@ -7,112 +7,147 @@ import { ApiResponse } from "src/modules/base/classes/ApiResponse.class";
 import { User } from "../models/user.schema";
 import { GetInvitationsDto } from "../dtos/getInvitations.dto";
 import { Approved } from "../enums/shared.enums";
+import { getMySentInvitationsDto } from "../dtos/getMySentInvitations.dto";
 
 @Injectable()
 export class InvitationService {
 
     constructor(@InjectModel(Invitation.name) private invitationModel: Model<Invitation>, @InjectModel(User.name) private userModel: Model<User>) { }
 
-async invite(invitationData: InvitationArrayDto, userId: string): Promise<ApiResponse<Invitation[]>> {
-    const invitations = invitationData.invitations;
+    async invite(invitationData: InvitationArrayDto, userId: string): Promise<ApiResponse<Invitation[]>> {
+        const invitations = invitationData.invitations;
 
-    // 1. VALIDATE INVITEE EXISTS FOR ALL
-    for (const inv of invitations) {
-        const inviteeExists = await this.userModel.exists({ _id: inv.invitee });
-        if (!inviteeExists) {
-            return ApiResponse.error(`Invitee ${inv.invitee} does not exist`, 404);
-        }
-    }
-
-    // result collector
-    const savedInvitations: Invitation[] = [];
-
-    for (const inv of invitations) {
-
-        // 2. CHECK IF THIS USER ALREADY SENT THIS INVITATION
-        let invitationAlreadySent;
-
-        if (inv.isSingleUse) {
-            invitationAlreadySent = await this.invitationModel.findOne({
-                inviter: userId,
-                invitee: inv.invitee,
-                date: inv.date,
-                start: inv.start,
-                "record.state": 1
-            });
-        } else {
-            invitationAlreadySent = await this.invitationModel.findOne({
-                inviter: userId,
-                invitee: inv.invitee,
-                weekday: inv.weekday,
-                start: inv.start,
-                "record.state": 1
-            });
-        }
-
-        if (invitationAlreadySent) {
-            return ApiResponse.error(
-                `You have already sent an invitation at ${inv.start} (${inv.weekday ?? inv.date})`,
-                400
-            );
-        }
-
-        // 3. CHECK IF INVITEE IS BUSY (STRICT OVERLAP)
-        let inviteeIsBusy;
-
-        const overlapQuery = {
-            invitee: inv.invitee,
-            "record.state": 1,
-            $or: [
-                { start: { $gt: inv.start, $lt: inv.end } },
-                { end: { $gt: inv.start, $lt: inv.end } }
-            ]
-        };
-
-        if (inv.isSingleUse) {
-            inviteeIsBusy = await this.invitationModel.findOne({
-                ...overlapQuery,
-                date: inv.date
-            });
-        } else {
-            inviteeIsBusy = await this.invitationModel.findOne({
-                ...overlapQuery,
-                weekday: inv.weekday
-            });
-        }
-
-        if (inviteeIsBusy) {
-            if (inv.isSingleUse) {
-                return ApiResponse.error(
-                    `Hey, he is busy from ${inviteeIsBusy.start} to ${inviteeIsBusy.end}`,
-                    400
-                );
-            } else {
-                return ApiResponse.error(
-                    `Hey, he is busy from ${inviteeIsBusy.start} to ${inviteeIsBusy.end} on ${inviteeIsBusy.weekday}`,
-                    400
-                );
+        // 1. VALIDATE INVITEE EXISTS FOR ALL
+        for (const inv of invitations) {
+            const inviteeExists = await this.userModel.exists({ _id: inv.invitee });
+            if (!inviteeExists) {
+                return ApiResponse.error(`Invitee ${inv.invitee} does not exist`, 404);
             }
         }
 
-        // 4. CREATE THE INVITATION
-        const approved = inv.invitee === userId ? 1 : 0;
+        // result collector
+        const savedInvitations: Invitation[] = [];
 
-        const newInvitation = new this.invitationModel({
-            ...inv,
-            inviter: userId,
-            approved,
-            active: 1,
-            canceled: 0,
-        });
+        for (const inv of invitations) {
 
-        const saved = await newInvitation.save();
-        savedInvitations.push(saved);
+            // 2. CHECK IF THIS USER ALREADY SENT THIS INVITATION
+            let invitationAlreadySent;
+
+            if (inv.isSingleUse) {
+                invitationAlreadySent = await this.invitationModel.findOne({
+                    inviter: userId,
+                    invitee: inv.invitee,
+                    date: inv.date,
+                    start: inv.start,
+                    "record.state": 1
+                });
+            } else {
+                invitationAlreadySent = await this.invitationModel.findOne({
+                    inviter: userId,
+                    invitee: inv.invitee,
+                    weekday: inv.weekday,
+                    start: inv.start,
+                    "record.state": 1
+                });
+            }
+
+            if (invitationAlreadySent) {
+                return ApiResponse.error(
+                    `You have already sent an invitation at ${inv.start} (${inv.weekday ?? inv.date})`,
+                    400
+                );
+            }
+
+            // 3. CHECK IF INVITEE IS BUSY (STRICT OVERLAP)
+            let inviteeIsBusy;
+
+            const overlapQuery = {
+                invitee: inv.invitee,
+                "record.state": 1,
+                $or: [
+                    { start: { $gt: inv.start, $lt: inv.end } },
+                    { end: { $gt: inv.start, $lt: inv.end } }
+                ]
+            };
+
+            if (inv.isSingleUse) {
+                inviteeIsBusy = await this.invitationModel.findOne({
+                    ...overlapQuery,
+                    date: inv.date
+                });
+            } else {
+                inviteeIsBusy = await this.invitationModel.findOne({
+                    ...overlapQuery,
+                    weekday: inv.weekday
+                });
+            }
+
+            if (inviteeIsBusy) {
+                if (inv.isSingleUse) {
+                    return ApiResponse.error(
+                        `Hey, he is busy from ${inviteeIsBusy.start} to ${inviteeIsBusy.end}`,
+                        400
+                    );
+                } else {
+                    return ApiResponse.error(
+                        `Hey, he is busy from ${inviteeIsBusy.start} to ${inviteeIsBusy.end} on ${inviteeIsBusy.weekday}`,
+                        400
+                    );
+                }
+            }
+
+            // 4. CREATE THE INVITATION
+            const approved = inv.invitee === userId ? 1 : 0;
+
+            const newInvitation = new this.invitationModel({
+                ...inv,
+                inviter: userId,
+                approved,
+                active: 1,
+                canceled: 0,
+            });
+
+            const saved = await newInvitation.save();
+            savedInvitations.push(saved);
+        }
+
+        // 5. RETURN ALL SAVED INVITATIONS
+        return ApiResponse.success(savedInvitations);
     }
 
-    // 5. RETURN ALL SAVED INVITATIONS
-    return ApiResponse.success(savedInvitations);
-}
+    async getMySentInvitations(
+        userId: string,
+        getMySentInvitationsData: getMySentInvitationsDto
+    ): Promise<ApiResponse<Invitation[]>> {
+
+        const query: any = {
+            inviter: userId,
+            approved: 0
+        };
+
+        if (getMySentInvitationsData.active !== undefined) {
+            query['record.state'] = getMySentInvitationsData.active;
+        }
+
+        if (getMySentInvitationsData.urgent !== undefined) {
+            query.urgent = getMySentInvitationsData.urgent;
+        }
+
+        if (getMySentInvitationsData.approved !== undefined) {
+            query.approved = getMySentInvitationsData.approved;
+        }
+
+        if (getMySentInvitationsData.location) {
+            query.location = getMySentInvitationsData.location;
+        }
+
+        const invitations = await this.invitationModel.find(query).populate({
+            path: 'invitee',
+            select: '-password'
+        }).exec();
+
+        return ApiResponse.success(invitations);
+    }
 
 
     async getInvitationsByUser(
@@ -143,7 +178,7 @@ async invite(invitationData: InvitationArrayDto, userId: string): Promise<ApiRes
         }
 
         if (getInvitationsData.specificDate) {
-            filter.specificDate = getInvitationsData.specificDate;
+            filter.date = getInvitationsData.specificDate;
         }
 
         if (getInvitationsData.searchQuery) {

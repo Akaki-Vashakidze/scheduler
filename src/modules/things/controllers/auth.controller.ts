@@ -8,6 +8,7 @@ import { ForgotPasswordDto } from "../dtos/forgot-password.dto";
 import { ResetPasswordDto } from "../dtos/reset-password.dto";
 import { ConfirmCodeDto } from "../dtos/confirm-code.dto";
 import { JwtTokenService } from "../services/jwt-token.service";
+import { SendEmailVerificationCodeDto } from "../dtos/sendEmailVerificationCode.dto";
 
 @Controller('auth')
 export class AuthController {
@@ -24,8 +25,8 @@ export class AuthController {
     }
 
     @Post('sendVerificationCodeEmail')
-    async sendVerificationCodeEmail(@Body() {email}) {
-        return this.authService.sendVerificationCodeEmail(email);
+    async sendVerificationCodeEmail(@Body() SendEmailVerificationCodeDto:SendEmailVerificationCodeDto) {
+        return this.authService.sendVerificationCodeEmail(SendEmailVerificationCodeDto);
     }
 
     @Post('confirmCodeEmail')

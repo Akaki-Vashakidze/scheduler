@@ -6,6 +6,7 @@ import { AuthGuard } from "../guards/auth.guard";
 import { Helper } from "../utils/helper";
 import { JwtTokenService } from "../services/jwt-token.service";
 import { GetInvitationsDto } from "../dtos/getInvitations.dto";
+import { getMySentInvitationsDto } from "../dtos/getMySentInvitations.dto";
 
 @Controller('invitation')
 @UseGuards(AuthGuard)
@@ -16,6 +17,12 @@ export class InvitationController {
     async invite(@Body() invitationData: InvitationArrayDto, @Req() req: Request) {
         const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
         return this.invitationService.invite(invitationData, userId);
+    }
+    
+    @Post('mySentInvitations')
+    async getMySentInvitations(@Req() req: Request,@Body() getMySentInvitationsData: getMySentInvitationsDto) {
+        const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
+        return this.invitationService.getMySentInvitations(userId, getMySentInvitationsData);
     }
 
     @Post('list')

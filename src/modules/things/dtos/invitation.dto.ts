@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsArray, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateNested } from "class-validator";
+import { IsArray, IsDate, IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateNested } from "class-validator";
 
 export class InvitationDto {
     @IsString()
@@ -32,7 +32,7 @@ export class InvitationDto {
     @IsNumber()
     urgent: number;
 
-    @IsString()
+    @IsMongoId({ message: 'invitee must be a valid MongoDB ObjectId' })
     invitee: string;
 
     @IsNumber()

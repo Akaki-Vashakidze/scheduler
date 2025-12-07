@@ -13,6 +13,12 @@ export class SignupDto  {
     email: string;
 
     @IsString()
+    name: string;
+
+    @IsString()
+    surname: string;
+
+    @IsString()
     code: string;
 
 }
