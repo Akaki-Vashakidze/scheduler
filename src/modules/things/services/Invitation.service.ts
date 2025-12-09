@@ -205,11 +205,16 @@ export class InvitationService {
     }
 
     async cancelInvitation(invitationId: string): Promise<ApiResponse<Invitation>> {
-        const updatedInvitation = await this.invitationModel.findByIdAndUpdate(invitationId, { canceled: true }, { new: true }).exec();
+        const updatedInvitation = await this.invitationModel.findByIdAndUpdate(invitationId, { canceled: 1 }, { new: true }).exec();
         return ApiResponse.success(updatedInvitation);
     }
 
-    async removeInvitation(userId: string, invitationId: string): Promise<ApiResponse<null>> {
+    async reactivateMySentInvitation(invitationId: string): Promise<ApiResponse<Invitation>> {
+        const updatedInvitation = await this.invitationModel.findByIdAndUpdate(invitationId, { canceled: 0 }, { new: true }).exec();
+        return ApiResponse.success(updatedInvitation);
+    }
+
+    async removeMySentInvitation(userId: string, invitationId: string): Promise<ApiResponse<null>> {
         const invitation = await this.invitationModel.findById(invitationId).exec();
 
         if (!invitation) {
@@ -219,13 +224,14 @@ export class InvitationService {
         if (invitation.inviter.toString() !== userId) {
             return ApiResponse.error('You are not allowed to delete this invitation', 403);
         }
+        
         await this.invitationModel.findByIdAndDelete(invitationId).exec();
 
         return ApiResponse.success('Invitation successfully deleted');
     }
 
     async remindInvitation(invitationId: string): Promise<ApiResponse<Invitation>> {
-        await this.invitationModel.findByIdAndUpdate(invitationId, { reminder: true }, { new: true }).exec();
+        await this.invitationModel.findByIdAndUpdate(invitationId, { reminder: 1 }, { new: true }).exec();
         return ApiResponse.success('invitation successfully updated');
     }
 

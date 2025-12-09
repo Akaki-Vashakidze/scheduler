@@ -56,14 +56,19 @@ export class InvitationController {
         return this.invitationService.cancelInvitation(invitationId);
     }
 
+    @Post('reactivateMySent/:id')
+    async reactivateMySentInvitation(@Param('id') invitationId: string) {
+        return this.invitationService.reactivateMySentInvitation(invitationId);
+    }
+
     @Post('remind/:id')
     async remindInvitation(@Param('id') invitationId: string) {
         return this.invitationService.remindInvitation(invitationId);
     }
 
-    @Delete('remove/:id')
+    @Delete('removeMySent/:id')
     async removeInvitation(@Param('id') invitationId: string, @Req() req: Request) {
         const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
-        return this.invitationService.removeInvitation(userId, invitationId);
+        return this.invitationService.removeMySentInvitation(userId, invitationId);
     }   
 }
