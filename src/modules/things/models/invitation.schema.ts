@@ -12,7 +12,7 @@ export class Invitation extends BaseSchema {
     @Prop({ required: false })
     weekday: string;
 
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Inviter', required: true })
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
     inviter: mongoose.Types.ObjectId;
 
     @Prop({ required: true })

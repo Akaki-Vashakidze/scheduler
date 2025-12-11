@@ -190,7 +190,10 @@ export class InvitationService {
             ];
         }
 
-        const invitations = await this.invitationModel.find(filter).exec();
+        const invitations = await this.invitationModel.find(filter).populate({
+            path: 'inviter',
+            select: '-password'
+        }).exec(); 
         return ApiResponse.success(invitations);
     }
 
