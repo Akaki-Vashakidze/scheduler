@@ -11,10 +11,10 @@ export class ScheduleService {
 
     constructor(@InjectModel(UserContact.name) private userContactModel: Model<UserContact>, @InjectModel(Invitation.name) private invitationModel: Model<Invitation>, @InjectModel(User.name) private userModel: Model<User>) { }
 
-    async getScheduleInvitations(userId: string, subjectuserId:string): Promise<ApiResponse<any>> {
+    async getScheduleInvitations(userId: string, subjectuserId: string): Promise<ApiResponse<any>> {
         const userobjId = new mongoose.Types.ObjectId(userId);
         const subjectuserObjId = new mongoose.Types.ObjectId(subjectuserId);
-        
+
         const isContact = await this.userContactModel.findOne({
             owner: userobjId,
             contact: subjectuserObjId
@@ -24,7 +24,27 @@ export class ScheduleService {
             return ApiResponse.error('This user is not your contact', 400);
         }
 
-        const invitations = await this.invitationModel.find({ invitee: subjectuserObjId, approved:1 }).exec();
+        const invitations = await this.invitationModel.find({
+            approved: 1,
+            $or: [
+                { invitee: subjectuserObjId },
+                { inviter: subjectuserObjId }
+            ]
+        }).exec();
+        return ApiResponse.success(invitations);
+    }
+
+    async getMyScheduleInvitations(userId: string): Promise<ApiResponse<any>> {
+        const userObjId = new mongoose.Types.ObjectId(userId);
+
+        const invitations = await this.invitationModel.find({
+            approved: 1,
+            $or: [
+                { invitee: userObjId },
+                { inviter: userObjId }
+            ]
+        }).exec();
+
         return ApiResponse.success(invitations);
     }
 

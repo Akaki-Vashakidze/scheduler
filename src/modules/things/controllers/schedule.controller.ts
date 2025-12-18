@@ -9,6 +9,11 @@ import { Helper } from "../utils/helper";
 @UseGuards(AuthGuard)
 export class ScheduleController {
     constructor(private scheduleService:ScheduleService, private usersService: UsersService, private jwtTokenService: JwtTokenService) { }
+    @Get('my')
+    async getMyInvitationsAgreed( @Req() req: Request) {
+        const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
+        return this.scheduleService.getMyScheduleInvitations(userId);
+    }
 
     @Get(':id')
     async getInvitationsProposed(@Param('id') subjectuserId: string, @Req() req: Request) {
@@ -17,3 +22,4 @@ export class ScheduleController {
     }
 
 }
+
