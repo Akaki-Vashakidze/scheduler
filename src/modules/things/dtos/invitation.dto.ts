@@ -32,8 +32,9 @@ export class InvitationDto {
     @IsNumber()
     urgent: number;
 
+    @IsOptional()
     @IsMongoId({ message: 'invitee must be a valid MongoDB ObjectId' })
-    invitee: string;
+    invitee?: string;
 
     @IsNumber()
     isSingleUse: number;

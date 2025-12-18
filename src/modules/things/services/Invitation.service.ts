@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Invitation } from "../models/invitation.schema";
-import { Model } from "mongoose";
+import { isValidObjectId, Model } from "mongoose";
 import { InvitationArrayDto, InvitationDto } from "../dtos/invitation.dto";
 import { ApiResponse } from "src/modules/base/classes/ApiResponse.class";
 import { User } from "../models/user.schema";
@@ -16,12 +16,13 @@ export class InvitationService {
 
     async invite(invitationData: InvitationArrayDto, userId: string): Promise<ApiResponse<Invitation[]>> {
         const invitations = invitationData.invitations;
-
         // 1. VALIDATE INVITEE EXISTS FOR ALL
         for (const inv of invitations) {
-            const inviteeExists = await this.userModel.exists({ _id: inv.invitee });
-            if (!inviteeExists) {
-                return ApiResponse.error(`Invitee ${inv.invitee} does not exist`, 404);
+            if (inv.invitee && isValidObjectId(inv.invitee)) {
+                const inviteeExists = await this.userModel.exists({ _id: inv.invitee });
+                if (!inviteeExists) {
+                    return ApiResponse.error(`Invitee ${inv.invitee} does not exist`, 404);
+                }
             }
         }
 
@@ -31,38 +32,39 @@ export class InvitationService {
         for (const inv of invitations) {
 
             // 2. CHECK IF THIS USER ALREADY SENT THIS INVITATION
-            let invitationAlreadySent;
+            if (inv.invitee && isValidObjectId(inv.invitee)) {
+                let invitationAlreadySent;
 
-            if (inv.isSingleUse) {
-                invitationAlreadySent = await this.invitationModel.findOne({
-                    inviter: userId,
-                    invitee: inv.invitee,
-                    date: inv.date,
-                    start: inv.start,
-                    "record.state": 1
-                });
-            } else {
-                invitationAlreadySent = await this.invitationModel.findOne({
-                    inviter: userId,
-                    invitee: inv.invitee,
-                    weekday: inv.weekday,
-                    start: inv.start,
-                    "record.state": 1
-                });
+                if (inv.isSingleUse) {
+                    invitationAlreadySent = await this.invitationModel.findOne({
+                        inviter: userId,
+                        invitee: inv.invitee,
+                        date: inv.date,
+                        start: inv.start,
+                        "record.state": 1
+                    });
+                } else {
+                    invitationAlreadySent = await this.invitationModel.findOne({
+                        inviter: userId,
+                        invitee: inv.invitee,
+                        weekday: inv.weekday,
+                        start: inv.start,
+                        "record.state": 1
+                    });
+                }
+
+                if (invitationAlreadySent) {
+                    return ApiResponse.error(
+                        `You have already sent an invitation at ${inv.start} (${inv.weekday ?? inv.date})`,
+                        400
+                    );
+                }
             }
-
-            if (invitationAlreadySent) {
-                return ApiResponse.error(
-                    `You have already sent an invitation at ${inv.start} (${inv.weekday ?? inv.date})`,
-                    400
-                );
-            }
-
             // 3. CHECK IF INVITEE IS BUSY (STRICT OVERLAP)
             let inviteeIsBusy;
 
             const overlapQuery = {
-                invitee: inv.invitee,
+                invitee: (inv.invitee && isValidObjectId(inv.invitee)) ? inv.invitee : userId,
                 "record.state": 1,
                 $or: [
                     { start: { $gt: inv.start, $lt: inv.end } },
@@ -97,11 +99,12 @@ export class InvitationService {
             }
 
             // 4. CREATE THE INVITATION
-            const approved = inv.invitee === userId ? 1 : 0;
+            const approved = (inv.invitee && isValidObjectId(inv.invitee)) ? 0 : 1;
 
             const newInvitation = new this.invitationModel({
                 ...inv,
                 inviter: userId,
+                invitee: userId,
                 approved,
                 active: 1,
                 canceled: 0,
@@ -193,7 +196,7 @@ export class InvitationService {
         const invitations = await this.invitationModel.find(filter).populate({
             path: 'inviter',
             select: '-password'
-        }).exec(); 
+        }).exec();
         return ApiResponse.success(invitations);
     }
 
@@ -227,7 +230,7 @@ export class InvitationService {
         if (invitation.inviter.toString() !== userId) {
             return ApiResponse.error('You are not allowed to delete this invitation', 403);
         }
-        
+
         await this.invitationModel.findByIdAndDelete(invitationId).exec();
 
         return ApiResponse.success('Invitation successfully deleted');
