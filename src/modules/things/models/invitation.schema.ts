@@ -16,12 +16,16 @@ export class Invitation extends BaseSchema {
     inviter: mongoose.Types.ObjectId;
 
     @Prop({ required: true })
-    @IsMilitaryTime()
-    start: string;
+    startMinute: number;
 
     @Prop({ required: true })
-    @IsMilitaryTime()
-    end: string;
+    startHour: number;
+
+    @Prop({ required: true })
+    endMinute: number;
+
+    @Prop({ required: true })
+    endHour: number;
 
     @Prop({ required: true })
     title: string;

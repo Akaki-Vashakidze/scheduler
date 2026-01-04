@@ -40,7 +40,8 @@ export class InvitationService {
                         inviter: userId,
                         invitee: inv.invitee,
                         date: inv.date,
-                        start: inv.start,
+                        startHour: inv.startHour,
+                        startMinute: inv.startMinute,
                         "record.state": 1
                     });
                 } else {
@@ -48,14 +49,15 @@ export class InvitationService {
                         inviter: userId,
                         invitee: inv.invitee,
                         weekday: inv.weekday,
-                        start: inv.start,
+                        startHour: inv.startHour,
+                        startMinute: inv.startMinute,
                         "record.state": 1
                     });
                 }
 
                 if (invitationAlreadySent) {
                     return ApiResponse.error(
-                        `You have already sent an invitation at ${inv.start} (${inv.weekday ?? inv.date})`,
+                        `You have already sent an invitation at ${inv.startHour}:${inv.startMinute} (${inv.weekday ?? inv.date})`,
                         400
                     );
                 }
@@ -67,8 +69,8 @@ export class InvitationService {
                 invitee: (inv.invitee && isValidObjectId(inv.invitee)) ? inv.invitee : userId,
                 "record.state": 1,
                 $or: [
-                    { start: { $gt: inv.start, $lt: inv.end } },
-                    { end: { $gt: inv.start, $lt: inv.end } }
+                    { startHour: { $gt: inv.startHour, $lt: inv.endHour }, startMinute: { $gte: inv.startMinute, $lt: inv.endMinute } },
+                    { endHour: { $gt: inv.startHour, $lt: inv.endHour }, endMinute: { $gt: inv.startMinute, $lte: inv.endMinute } }
                 ]
             };
 
@@ -104,7 +106,7 @@ export class InvitationService {
             const newInvitation = new this.invitationModel({
                 ...inv,
                 inviter: userId,
-                invitee: userId,
+                invitee: (inv.invitee && isValidObjectId(inv.invitee)) ? inv.invitee : userId,
                 approved,
                 active: 1,
                 canceled: 0,

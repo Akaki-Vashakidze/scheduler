@@ -9,17 +9,17 @@ export class InvitationDto {
     @IsString()
     description: string;
 
-    @IsString()
-    @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
-        message: 'Time must be in HH:MM format',
-    })
-    start: string;
+    @IsNumber()
+    startMinute: number;
 
-    @IsString()
-    @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
-        message: 'Time must be in HH:MM format',
-    })
-    end: string;
+    @IsNumber()
+    startHour: number;
+
+    @IsNumber()
+    endMinute: number;
+
+    @IsNumber()
+    endHour: number;
 
     @IsString()
     @IsNotEmpty()
