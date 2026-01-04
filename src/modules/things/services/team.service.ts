@@ -39,4 +39,16 @@ export class TeamService {
         return ApiResponse.success(savedTeam);
     }
 
+    async getTeamsByUserId(userId: string): Promise<ApiResponse<Team[]>> {
+        const userObjectId = new Types.ObjectId(userId);
+
+        const teams = await this.teamModel.find({
+            $or: [
+                { leader: userObjectId },
+                { members: userObjectId }
+            ]
+        });
+
+        return ApiResponse.success(teams);
+    }
 }

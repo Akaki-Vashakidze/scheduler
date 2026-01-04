@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Post, Req, UseGuards } from "@nestjs/common";
 import { InvitationArrayDto } from "../dtos/invitation.dto";
 import { InvitationService } from "../services/Invitation.service";
 import { AuthGuard } from "../guards/auth.guard";
@@ -16,6 +16,12 @@ export class TeamController {
     async createTeam(@Body() data: CreateTeamDto, @Req() req: Request) {
         const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
         return this.teamService.createTeam(userId, data.members, data.title);
+    }
+
+    @Get('my-teams')
+    async getMyTeams(@Req() req: Request) {
+        const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
+        return this.teamService.getTeamsByUserId(userId);
     }
     
 }
