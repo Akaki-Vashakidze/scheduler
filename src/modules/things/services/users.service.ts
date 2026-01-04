@@ -184,7 +184,7 @@ export class UsersService {
         const contacts = await this.userContactstModel.find({
             owner: new mongoose.Types.ObjectId(userId),
         })
-            .populate('contact', 'email');
+        .populate('contact', 'email name surname'); 
 
         return ApiResponse.success(contacts);
     }

@@ -14,6 +14,8 @@ import { UsersController } from './controllers/users.controller';
 import { UsersService } from './services/users.service';
 import { ScheduleController } from './controllers/schedule.controller';
 import { ScheduleService } from './services/schedule.service';
+import { TeamController } from './controllers/team.controller';
+import { TeamService } from './services/team.service';
 
 dotenv.config();
 
@@ -22,8 +24,8 @@ dotenv.config();
         MongooseModule.forRoot(process.env.DB_URL!),
         MongooseModule.forFeature(MongooseModels),
     ],
-    controllers: [AuthController, InvitationController, SmsController, UsersController, ScheduleController],
-    providers: [AuthService, MailService, InvitationService, JwtTokenService, SmsService, UsersService, ScheduleService],
+    controllers: [AuthController, InvitationController, SmsController, UsersController, ScheduleController, TeamController],
+    providers: [AuthService, MailService, InvitationService, JwtTokenService, SmsService, UsersService, ScheduleService, TeamService],
 })
 export class ThingsModule {
     constructor() {
