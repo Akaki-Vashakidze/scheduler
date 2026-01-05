@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from "@nestjs/common";
 import { InvitationArrayDto } from "../dtos/invitation.dto";
 import { InvitationService } from "../services/Invitation.service";
 import { AuthGuard } from "../guards/auth.guard";
@@ -23,5 +23,29 @@ export class TeamController {
         const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
         return this.teamService.getTeamsByUserId(userId);
     }
+
+    @Delete('/:teamId/remove-member/:memberId')
+    async removeMemberFromTeam(@Req() req: Request, @Param('teamId') teamId: string, @Param('memberId') memberId: string) {
+        const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
+        return this.teamService.removeMemberFromTeam(teamId, memberId, userId);
+    }
+
+    @Post('/:teamId/add-members/:memberId')
+    async addMemberToTeam(@Req() req: Request, @Param('memberId') memberId: string, @Param('teamId') teamId: string) {
+        const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
+        return this.teamService.addMemberToTeam(teamId, memberId, userId);
+    }
     
+    @Post('/:teamId/giveLeaderShip/:newLeaderId')
+    async giveLeadership(@Req() req: Request, @Param('teamId') teamId: string, @Param('newLeaderId') newLeaderId: string) {
+        const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
+        return this.teamService.giveLeadership(teamId, newLeaderId, userId);
+    }
+
+    @Delete('/:teamId/delete')
+    async deleteTeam(@Req() req: Request, @Param('teamId') teamId: string) {
+        const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
+        return this.teamService.deleteTeam(teamId, userId);
+    }
+
 }

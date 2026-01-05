@@ -42,13 +42,97 @@ export class TeamService {
     async getTeamsByUserId(userId: string): Promise<ApiResponse<Team[]>> {
         const userObjectId = new Types.ObjectId(userId);
 
-        const teams = await this.teamModel.find({
-            $or: [
-                { leader: userObjectId },
-                { members: userObjectId }
-            ]
-        });
+        const teams = await this.teamModel
+            .find({
+                $or: [
+                    { leader: userObjectId },
+                    { members: userObjectId }
+                ]
+            })
+            .populate('leader', 'name surname email')
+            .populate('members', 'name surname email');
 
         return ApiResponse.success(teams);
     }
+
+    async removeMemberFromTeam(teamId: string, memberId: string, userId: string): Promise<ApiResponse<Team>> {
+        const team = await this.teamModel.findById(teamId);
+        if (!team) {
+            return ApiResponse.error('Team not found', 404);
+        }
+
+        const isMyTeam = team.leader.equals(new Types.ObjectId(userId));
+        if (!isMyTeam) {
+            return ApiResponse.error('You are not authorized to remove this member', 403);
+        }
+
+        const memberObjectId = new Types.ObjectId(memberId);
+        team.members = team.members.filter(m => !m.equals(memberObjectId));
+
+        const updatedTeam = await team.save();
+        return ApiResponse.success(updatedTeam);
+    }   
+
+    async deleteTeam(teamId: string, userId: string): Promise<ApiResponse<null>> {
+        const team = await this.teamModel.findById(teamId);     
+        if (!team) {
+            return ApiResponse.error('Team not found', 404);
+        }
+
+        const isMyTeam = team.leader.equals(new Types.ObjectId(userId));
+        if (!isMyTeam) {
+            return ApiResponse.error('You are not authorized to delete this team', 403);
+        }
+
+        await this.teamModel.deleteOne({ _id: teamId });
+        return ApiResponse.success(null);   
+    }
+
+    async giveLeadership(teamId: string, newLeaderId: string, userId: string): Promise<ApiResponse<Team>> {
+        const team = await this.teamModel.findById(teamId);
+        if (!team) {
+            return ApiResponse.error('Team not found', 404);
+        }
+
+        const isMyTeam = team.leader.equals(new Types.ObjectId(userId));
+        if (!isMyTeam) {
+            return ApiResponse.error('You are not authorized to give leadership', 403);
+        }
+
+        const newLeaderObjectId = new Types.ObjectId(newLeaderId);
+
+        team.leader = newLeaderObjectId;
+
+        team.members.push(new Types.ObjectId(userId));
+
+        team.members = team.members.filter(
+            memberId => !memberId.equals(newLeaderObjectId)
+        );
+
+        const updatedTeam = await team.save();
+        return ApiResponse.success(updatedTeam);
+    }
+
+
+    async addMemberToTeam(teamId: string, memberId: string, userId: string): Promise<ApiResponse<Team>> {
+        const team = await this.teamModel.findById(teamId);
+        if (!team) {
+            return ApiResponse.error('Team not found', 404);
+        }
+
+        const isMyTeam = team.leader.equals(new Types.ObjectId(userId));
+        if (!isMyTeam) {
+            return ApiResponse.error('You are not authorized to add members', 403);
+        }
+
+        const memberObjectId = new Types.ObjectId(memberId);
+        if (team.members.includes(memberObjectId) || team.leader.equals(memberObjectId)) {
+            return ApiResponse.error('User is already a member of the team', 400);
+        }
+
+        team.members.push(memberObjectId);
+        const updatedTeam = await team.save();
+        return ApiResponse.success(updatedTeam);
+    }   
+
 }
