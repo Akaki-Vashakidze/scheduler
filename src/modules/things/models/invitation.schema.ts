@@ -25,6 +25,12 @@ export class Invitation extends BaseSchema {
     endMinute: number;
 
     @Prop({ required: true })
+    endMinutesTotal: number;
+
+    @Prop({ required: true })
+    startMinutesTotal: number;
+
+    @Prop({ required: true })
     endHour: number;
 
     @Prop({ required: true })

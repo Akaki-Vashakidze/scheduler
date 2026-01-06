@@ -15,6 +15,7 @@ export class InvitationService {
     constructor(@InjectModel(Invitation.name) private invitationModel: Model<Invitation>, @InjectModel(User.name) private userModel: Model<User>) { }
 
     async invite(invitationData: InvitationArrayDto, userId: string): Promise<ApiResponse<Invitation[]>> {
+        
         const invitations = invitationData.invitations;
         // 1. VALIDATE INVITEE EXISTS FOR ALL
         for (const inv of invitations) {
@@ -30,18 +31,18 @@ export class InvitationService {
         const savedInvitations: Invitation[] = [];
 
         for (const inv of invitations) {
-
+            let startMinutesTotal = (inv.startHour * 60) + inv.startMinute;
+            let endMinutesTotal = (inv.endHour * 60) + inv.endMinute
+            
             // 2. CHECK IF THIS USER ALREADY SENT THIS INVITATION
             if (inv.invitee && isValidObjectId(inv.invitee)) {
                 let invitationAlreadySent;
-
                 if (inv.isSingleUse) {
                     invitationAlreadySent = await this.invitationModel.findOne({
                         inviter: userId,
                         invitee: inv.invitee,
-                        date: inv.date,
-                        startHour: inv.startHour,
-                        startMinute: inv.startMinute,
+                        date: this.formatDateToDay(inv.date),
+                        startMinutesTotal:startMinutesTotal,
                         "record.state": 1
                     });
                 } else {
@@ -49,19 +50,46 @@ export class InvitationService {
                         inviter: userId,
                         invitee: inv.invitee,
                         weekday: inv.weekday,
-                        startHour: inv.startHour,
-                        startMinute: inv.startMinute,
+                        startMinutesTotal:startMinutesTotal,
                         "record.state": 1
                     });
                 }
 
                 if (invitationAlreadySent) {
                     return ApiResponse.error(
-                        `You have already sent an invitation at ${inv.startHour}:${inv.startMinute} (${inv.weekday ?? inv.date})`,
+                        `You have already sent an invitation at ${inv.startHour}:${inv.startMinute} (${inv.weekday ?? this.formatDateToDay(inv.date)})`,
+                        400
+                    );
+                }
+            } else {
+                let IamAlreadyBusy;
+                if (inv.isSingleUse) {
+                    IamAlreadyBusy = await this.invitationModel.findOne({
+                        inviter: userId,
+                        invitee: userId,
+                        date: this.formatDateToDay(inv.date),
+                        startMinutesTotal:startMinutesTotal,
+                        "record.state": 1
+                    });
+                } else {
+                    IamAlreadyBusy = await this.invitationModel.findOne({
+                        inviter: userId,
+                        invitee: userId,
+                        weekday: inv.weekday,
+                        startMinutesTotal:startMinutesTotal,
+                        "record.state": 1
+                    });
+                }
+
+                if (IamAlreadyBusy) {
+                    return ApiResponse.error(
+                        `You already have plans at ${inv.startHour}:${inv.startMinute} (${inv.weekday ?? this.formatDateToDay(inv.date)})`,
                         400
                     );
                 }
             }
+
+
             // 3. CHECK IF INVITEE IS BUSY (STRICT OVERLAP)
             let inviteeIsBusy;
 
@@ -69,15 +97,16 @@ export class InvitationService {
                 invitee: (inv.invitee && isValidObjectId(inv.invitee)) ? inv.invitee : userId,
                 "record.state": 1,
                 $or: [
-                    { startHour: { $gt: inv.startHour, $lt: inv.endHour }, startMinute: { $gte: inv.startMinute, $lt: inv.endMinute } },
-                    { endHour: { $gt: inv.startHour, $lt: inv.endHour }, endMinute: { $gt: inv.startMinute, $lte: inv.endMinute } }
+                    { startMinutesTotal: { $gt:startMinutesTotal }, endMinutesTotal: { $lt: endMinutesTotal } },
+                    { endMinutesTotal: { $gt: startMinutesTotal, $lt: endMinutesTotal }},
+                    { startMinutesTotal: { $gt: startMinutesTotal,  $lt: endMinutesTotal  }},
+                    { startMinutesTotal: { $lt: startMinutesTotal }, endMinutesTotal: { $gt:endMinutesTotal } }
                 ]
             };
-
             if (inv.isSingleUse) {
                 inviteeIsBusy = await this.invitationModel.findOne({
                     ...overlapQuery,
-                    date: inv.date
+                    date: this.formatDateToDay(inv.date)
                 });
             } else {
                 inviteeIsBusy = await this.invitationModel.findOne({
@@ -85,16 +114,15 @@ export class InvitationService {
                     weekday: inv.weekday
                 });
             }
-
             if (inviteeIsBusy) {
                 if (inv.isSingleUse) {
                     return ApiResponse.error(
-                        `Hey, he is busy from ${inviteeIsBusy.start} to ${inviteeIsBusy.end}`,
+                        `Hey, he is busy from ${this.formatTime(inviteeIsBusy.startHour, inviteeIsBusy.startMinute)} to ${this.formatTime(inviteeIsBusy.endHour, inviteeIsBusy.endMinute)}`,
                         400
                     );
                 } else {
                     return ApiResponse.error(
-                        `Hey, he is busy from ${inviteeIsBusy.start} to ${inviteeIsBusy.end} on ${inviteeIsBusy.weekday}`,
+                        `Hey, he is busy from ${this.formatTime(inviteeIsBusy.startHour, inviteeIsBusy.startMinute)} to ${this.formatTime(inviteeIsBusy.endHour, inviteeIsBusy.endMinute)} on ${inviteeIsBusy.weekday}`,
                         400
                     );
                 }
@@ -102,12 +130,15 @@ export class InvitationService {
 
             // 4. CREATE THE INVITATION
             const approved = (inv.invitee && isValidObjectId(inv.invitee)) ? 0 : 1;
-
+            const dayOnlySlice = this.formatDateToDay(inv.date)
             const newInvitation = new this.invitationModel({
                 ...inv,
+                startMinutesTotal: (inv.startHour * 60) + inv.startMinute,
+                endMinutesTotal: (inv.endHour * 60) + inv.endMinute,
                 inviter: userId,
                 invitee: (inv.invitee && isValidObjectId(inv.invitee)) ? inv.invitee : userId,
                 approved,
+                date: dayOnlySlice,
                 active: 1,
                 canceled: 0,
             });
@@ -118,6 +149,10 @@ export class InvitationService {
 
         // 5. RETURN ALL SAVED INVITATIONS
         return ApiResponse.success(savedInvitations);
+    }
+
+    formatDateToDay(date:Date){
+        return date.toISOString().slice(0, 10);
     }
 
     async getMySentInvitations(
@@ -154,6 +189,12 @@ export class InvitationService {
         return ApiResponse.success(invitations);
     }
 
+    formatTime(hourItem:number, minuteItem:number){
+        let hour = hourItem < 10 ? '0' + hourItem : hourItem;
+        let minute = minuteItem < 10 ? '0' + minuteItem : minuteItem;
+
+        return hour + ':' + minute;
+    }
 
     async getInvitationsByUser(
         userId: string,
