@@ -49,72 +49,74 @@ export class ScheduleService {
         return ApiResponse.success(invitations);
     }
 
-    async getTeamSchedule(teamId: string, userId: string): Promise<ApiResponse<any>> {
+async getTeamSchedule(teamId: string, userId: string): Promise<ApiResponse<any>> {
 
-        const team = await this.teamModel.findById(teamId);
+    const team = await this.teamModel.findById(teamId);
 
-        if (!team) {
-            return ApiResponse.error('Team not found', 404);
-        }
-
-        const teamMembers: Types.ObjectId[] = [
-            ...team.members,
-            team.leader
-        ];
-
-        const invitations = await this.invitationModel.aggregate([
-            {
-                $match: {
-                    $or: [
-                        { invitee: { $in: teamMembers } },
-                        { inviter: { $in: teamMembers } }
-                    ]
-                }
-            },
-
-            // Ensure uniqueness
-            {
-                $group: {
-                    _id: '$_id',
-                    doc: { $first: '$$ROOT' }
-                }
-            },
-            {
-                $replaceRoot: { newRoot: '$doc' }
-            },
-
-            // 👉 populate invitee
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'invitee',
-                    foreignField: '_id',
-                    as: 'invitee'
-                }
-            },
-            { $unwind: '$invitee' },
-
-            // 👉 populate inviter
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'inviter',
-                    foreignField: '_id',
-                    as: 'inviter'
-                }
-            },
-            { $unwind: '$inviter' },
-
-            // 👉 remove sensitive fields
-            {
-                $project: {
-                    'invitee.password': 0,
-                    'inviter.password': 0
-                }
-            }
-        ]);
-
-        return ApiResponse.success(invitations);
+    if (!team) {
+        return ApiResponse.error('Team not found', 404);
     }
+
+    const teamMembers: Types.ObjectId[] = [
+        ...team.members,
+        team.leader
+    ];
+
+    const invitations = await this.invitationModel.aggregate([
+        {
+            $match: {
+                approved: 1, // ✅ ONLY APPROVED
+                $or: [
+                    { invitee: { $in: teamMembers } },
+                    { inviter: { $in: teamMembers } }
+                ]
+            }
+        },
+
+        // Ensure uniqueness
+        {
+            $group: {
+                _id: '$_id',
+                doc: { $first: '$$ROOT' }
+            }
+        },
+        {
+            $replaceRoot: { newRoot: '$doc' }
+        },
+
+        // 👉 populate invitee
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'invitee',
+                foreignField: '_id',
+                as: 'invitee'
+            }
+        },
+        { $unwind: '$invitee' },
+
+        // 👉 populate inviter
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'inviter',
+                foreignField: '_id',
+                as: 'inviter'
+            }
+        },
+        { $unwind: '$inviter' },
+
+        // 👉 remove sensitive fields
+        {
+            $project: {
+                'invitee.password': 0,
+                'inviter.password': 0
+            }
+        }
+    ]);
+
+    return ApiResponse.success(invitations);
+}
+
 
 }

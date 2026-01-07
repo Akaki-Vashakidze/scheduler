@@ -18,6 +18,12 @@ export class InvitationController {
         const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
         return this.invitationService.invite(invitationData, userId);
     }
+
+    @Post('inviteTeam')
+    async inviteTeam(@Body() teamInvitationData: InvitationArrayDto, @Req() req: Request) {
+        const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
+        return this.invitationService.inviteTeam(teamInvitationData, userId);
+    }
     
     @Post('mySentInvitations')
     async getMySentInvitations(@Req() req: Request,@Body() getMySentInvitationsData: getMySentInvitationsDto) {
