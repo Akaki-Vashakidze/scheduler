@@ -18,7 +18,6 @@ export class InvitationService {
     async invite(invitationData: InvitationArrayDto, userId: string): Promise<ApiResponse<Invitation[]>> {
 
         const invitations = invitationData.invitations;
-        // 1. VALIDATE INVITEE EXISTS FOR ALL
         for (const inv of invitations) {
             if (inv.invitee && isValidObjectId(inv.invitee)) {
                 const inviteeExists = await this.userModel.exists({ _id: inv.invitee });
@@ -28,14 +27,12 @@ export class InvitationService {
             }
         }
 
-        // result collector
         const savedInvitations: Invitation[] = [];
 
         for (const inv of invitations) {
             let startMinutesTotal = (inv.startHour * 60) + inv.startMinute;
             let endMinutesTotal = (inv.endHour * 60) + inv.endMinute
 
-            // 2. CHECK IF THIS USER ALREADY SENT THIS INVITATION
             if (inv.invitee && isValidObjectId(inv.invitee)) {
                 let invitationAlreadySent;
                 if (inv.isSingleUse) {
@@ -90,8 +87,6 @@ export class InvitationService {
                 }
             }
 
-
-            // 3. CHECK IF INVITEE IS BUSY (STRICT OVERLAP)
             let inviteeIsBusy;
 
             const overlapQuery = {
@@ -129,7 +124,6 @@ export class InvitationService {
                 }
             }
 
-            // 4. CREATE THE INVITATION
             const approved = (inv.invitee && isValidObjectId(inv.invitee)) ? 0 : 1;
             const dayOnlySlice = this.formatDateToDay(inv.date)
             const newInvitation = new this.invitationModel({
@@ -148,7 +142,6 @@ export class InvitationService {
             savedInvitations.push(saved);
         }
 
-        // 5. RETURN ALL SAVED INVITATIONS
         return ApiResponse.success(savedInvitations);
     }
 
@@ -315,14 +308,12 @@ async inviteTeam(
 
     for (const inv of invitations) {
 
-        // 1. FIND TEAM
         const team = await this.teamModel.findById(inv.invitee);
 
         if (!team) {
             return ApiResponse.error('Team not found', 404);
         }
 
-        // 2. COLLECT TEAM MEMBERS (UNIQUE, STRING)
         const teamMembers = Array.from(
             new Set([
                 ...team.members.map(id => id.toString()),
@@ -333,7 +324,6 @@ async inviteTeam(
         const startMinutesTotal = (inv.startHour * 60) + inv.startMinute;
         const endMinutesTotal = (inv.endHour * 60) + inv.endMinute;
 
-        // 3. VALIDATE TEAM MEMBERS EXIST
         const usersCount = await this.userModel.countDocuments({
             _id: { $in: teamMembers }
         });
@@ -342,10 +332,8 @@ async inviteTeam(
             return ApiResponse.error('One or more team members do not exist', 404);
         }
 
-        // 4. PROCESS EACH TEAM MEMBER
         for (const inviteeId of teamMembers) {
 
-            // 4.1 CHECK DUPLICATE
             const duplicateQuery: any = {
                 inviter: userId,
                 invitee: inviteeId,
@@ -368,7 +356,6 @@ async inviteTeam(
                 );
             }
 
-            // 4.2 CHECK OVERLAP
             const overlapQuery: any = {
                 invitee: inviteeId,
                 "record.state": 1,
@@ -391,7 +378,6 @@ async inviteTeam(
                 );
             }
 
-            // 4.3 CREATE INVITATION
             const newInvitation = new this.invitationModel({
                 ...inv,
                 inviter: userId,
@@ -402,7 +388,7 @@ async inviteTeam(
                 endMinutesTotal,
                 active: 1,
                 canceled: 0,
-                team: team._id // ✅ OPTIONAL BUT STRONGLY RECOMMENDED
+                team: team._id 
             });
 
             const saved = await newInvitation.save();

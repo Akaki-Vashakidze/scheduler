@@ -94,7 +94,6 @@ export class AuthService {
         }
         const code = Math.floor(1000 + Math.random() * 9000).toString();
 
-        // Set expiration time (e.g. 2 minutes from now)
         const expiresAt = new Date(Date.now() + 2 * 60 * 1000);
 
         await this.emailVerificationModel.create({ email, code, expiresAt });
@@ -247,7 +246,6 @@ async generateToken(userId: string) {
         const hashedNewPassword = await bcrypt.hash(newPassword, 10);
         user.password = hashedNewPassword;
         await user.save();
-        // await this.accessTokenModel.deleteOne({ _id: accessToken._id });
         let data = { message: "Password reset successfully" };
         return ApiResponse.success(data)
     }
