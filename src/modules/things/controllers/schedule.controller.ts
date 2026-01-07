@@ -21,5 +21,11 @@ export class ScheduleController {
         return this.scheduleService.getScheduleInvitations(userId, subjectuserId);
     }
 
+    @Get('/team/:id')
+    async getMyTeamSchedule(@Param('id') teamId:string, @Req() req: Request) {
+        const userId = Helper.getUserIdFromHeaderToken(req, this.jwtTokenService);
+        return this.scheduleService.getTeamSchedule(teamId,userId);
+    }
+
 }
 
