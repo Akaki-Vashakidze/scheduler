@@ -104,13 +104,13 @@ export class ScheduleService {
                         weekday:"$weekday"
                     },
                     originalDoc: { $first: "$$ROOT" },
-                    scheduleMembers: { $push: "$invitee" }
+                    meetParticipants: { $push: "$invitee" }
                 }
             },
             {
                 $replaceRoot: {
                     newRoot: {
-                        $mergeObjects: ["$originalDoc", { scheduleMembers: "$scheduleMembers" }]
+                        $mergeObjects: ["$originalDoc", { meetParticipants: "$meetParticipants" }]
                     }
                 }
             },
